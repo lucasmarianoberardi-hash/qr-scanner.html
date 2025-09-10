@@ -1188,26 +1188,27 @@
             showNotification(`${quantity}x ${product['Nombre del Producto']} agregado al carrito.`);
         }
         
+        // --- CÓDIGO CORREGIDO PARA EVITAR EL ERROR DE REMOVECHILD ---
         function updateCartDisplay() {
             const cartItemsContainer = document.getElementById('cart-items');
-            cartItemsContainer.innerHTML = '';
+            cartItemsContainer.innerHTML = ''; // Limpiar el contenido del carrito
+
             let subtotal = 0;
             let finalTotal = 0;
 
             cart.forEach(item => {
                 let itemPrice = item.price;
-                let itemDiscount = 0;
-                let itemTotal = item.price * item.quantity;
+                let itemTotal = itemPrice * item.quantity;
                 let discountMessage = '';
 
                 // Aplica descuento por producto
                 if (item.quantity >= DISCOUNT_THRESHOLD_20) {
-                    itemDiscount = itemPrice * DISCOUNT_PERCENTAGE_20;
-                    itemTotal = (itemPrice - itemDiscount) * item.quantity;
+                    itemPrice = itemPrice * (1 - DISCOUNT_PERCENTAGE_20);
+                    itemTotal = itemPrice * item.quantity;
                     discountMessage = ` (-20%)`;
                 } else if (item.quantity >= DISCOUNT_THRESHOLD_10) {
-                    itemDiscount = itemPrice * DISCOUNT_PERCENTAGE_10;
-                    itemTotal = (itemPrice - itemDiscount) * item.quantity;
+                    itemPrice = itemPrice * (1 - DISCOUNT_PERCENTAGE_10);
+                    itemTotal = itemPrice * item.quantity;
                     discountMessage = ` (-10%)`;
                 }
 
@@ -1227,8 +1228,8 @@
                 `;
                 cartItemsContainer.appendChild(li);
 
-                subtotal += item.price * item.quantity;
-                finalTotal += itemTotal;
+                subtotal += item.price * item.quantity; // subtotal sin descuentos
+                finalTotal += itemTotal; // total con descuentos aplicados
             });
 
             document.getElementById('cart-subtotal').textContent = subtotal.toFixed(2);
@@ -1240,25 +1241,22 @@
             }
             document.getElementById('cart-total').textContent = finalTotal.toFixed(2);
 
-            // CÓDIGO CORREGIDO PARA CONTAR LA CANTIDAD DE ARTÍCULOS DIFERENTES
             const cartCountElement = document.getElementById('cart-count');
-            const totalArticles = cart.length; // Cuenta el número de elementos en el array 'cart'
+            const totalArticles = cart.length;
             cartCountElement.textContent = totalArticles;
             cartCountElement.style.display = totalArticles > 0 ? 'flex' : 'none';
 
             document.getElementById('send-order-button').disabled = cart.length === 0;
 
-            const oldCartItemsContainer = document.getElementById('cart-items');
-            const newCartItemsContainer = oldCartItemsContainer.cloneNode(true);
-            oldCartItemsContainer.parentNode.replaceChild(newCartItemsContainer, oldCartItemsContainer);
+            // Llamamos a esta función para asegurar que los event listeners se adjunten correctamente
             attachCartEventListeners();
         }
 
-        // FIX: La función de event listeners fue completamente reescrita para evitar el congelamiento
         function attachCartEventListeners() {
             const cartItemsContainer = document.getElementById('cart-items');
             if (!cartItemsContainer) return;
 
+            // Usamos delegación de eventos en el contenedor principal del carrito
             cartItemsContainer.addEventListener('click', (event) => {
                 const target = event.target;
                 const productName = target.dataset.name;
@@ -1281,23 +1279,9 @@
                 localStorage.setItem('cart', JSON.stringify(cart));
                 updateCartDisplay();
             });
-
-            document.querySelectorAll('#cart-items input[type="number"]').forEach(input => {
-                input.onchange = (e) => {
-                    const productName = e.target.dataset.name;
-                    const newQuantity = parseInt(e.target.value, 10);
-                    const item = cart.find(i => i.name === productName);
-                    if (item && newQuantity >= 1) {
-                        item.quantity = newQuantity;
-                    } else if (item && newQuantity < 1) {
-                        cart = cart.filter(i => i.name !== productName);
-                    }
-                    localStorage.setItem('cart', JSON.stringify(cart));
-                    updateCartDisplay();
-                };
-            });
         }
-
+        // --- FIN DEL CÓDIGO CORREGIDO ---
+        
         function showNotification(message) {
             const notification = document.createElement('div');
             notification.classList.add('notification');
@@ -1419,15 +1403,14 @@
 
             cart.forEach(item => {
                 let itemPrice = item.price;
-                let itemDiscount = 0;
                 let itemTotal = item.price * item.quantity;
 
                 if (item.quantity >= DISCOUNT_THRESHOLD_20) {
-                    itemDiscount = itemPrice * DISCOUNT_PERCENTAGE_20;
-                    itemTotal = (itemPrice - itemDiscount) * item.quantity;
+                    itemPrice = itemPrice * (1 - DISCOUNT_PERCENTAGE_20);
+                    itemTotal = itemPrice * item.quantity;
                 } else if (item.quantity >= DISCOUNT_THRESHOLD_10) {
-                    itemDiscount = itemPrice * DISCOUNT_PERCENTAGE_10;
-                    itemTotal = (itemPrice - itemDiscount) * item.quantity;
+                    itemPrice = itemPrice * (1 - DISCOUNT_PERCENTAGE_10);
+                    itemTotal = itemPrice * item.quantity;
                 }
 
                 message += `* ${item.name} - Cantidad: ${item.quantity} - Subtotal: $${itemTotal.toFixed(2)}\n`;
