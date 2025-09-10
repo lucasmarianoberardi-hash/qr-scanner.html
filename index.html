@@ -1,76 +1,1473 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
+
 <head>
-    <meta charset="utf-8">
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Escáner QR</title>
+    <title>Dietética Virgilio</title>
+    <link rel="icon" href="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQoa73x-hEFikC_kBsIAL1pjuzpj_9fPwyZ-dI-C7f-JSLqKxiUCEnlB8KejiD5R8_aHuk&usqp=CAU" type="image/x-icon">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
+        /* Estilos generales */
         body {
             font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background-color: #f29a5e;
-            height: 100vh;
             margin: 0;
-            flex-direction: column;
+            padding-top: 70px;
+            background-color: #fccf7c;
             color: #333;
         }
+
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #f29a5e;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        /* Fixed Icons - NUEVA POSICIÓN: FIJOS ARRIBA DE MANERA HORIZONTAL */
+        .fixed-icons {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            display: flex;
+            flex-direction: row;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 20px;
+            background-color: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            box-sizing: border-box;
+        }
+
+        .fixed-icons button {
+            background-color: #f21616;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.3s ease;
+        }
+
+        .fixed-icons button:hover {
+            background-color: #d10d0d;
+        }
+
+        .fixed-icons button img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        /* Cart Icon Specifics */
+        #cart-icon {
+            position: relative;
+        }
+
+        .cart-count {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: #096e13;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 6px;
+            font-size: 0.8em;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Menu Desplegable */
+        .menu-desplegable {
+            position: relative;
+            display: inline-block;
+        }
+
+        .menu-desplegable-contenido {
+            display: none;
+            position: absolute;
+            background-color: #ed6a0c;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+            z-index: 1;
+            right: 0;
+            border-radius: 5px;
+            overflow-y: auto;
+            max-height: 300px;
+            top: calc(100% + 10px);
+        }
+
+        .menu-desplegable-contenido ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .menu-desplegable-contenido ul li a {
+            color: white;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            text-align: left;
+        }
+
+        .menu-desplegable-contenido ul li a:hover {
+            background-color: ##f5e5d5;
+        }
+
+        /* Campo de búsqueda */
+        #search {
+            display: none;
+            position: fixed;
+            top: 70px;
+            right: 20px;
+            width: calc(100% - 40px);
+            max-width: 300px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            z-index: 999;
+            box-sizing: border-box;
+        }
+
+        /* Carrito de Compras */
+        #cart {
+            position: fixed;
+            top: 70px;
+            left: 30px;
+            right: auto;
+            background-color: #ffff45;
+            border: 2px solid #d4c902;
+            border-radius: 14px;
+            z-index: 101;
+            display: none;
+            padding: 20px;
+            max-height: 70vh;
+            overflow-y: auto;
+            box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.1);
+            width: calc(100% - 60px);
+        }
+
+        .cart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        .cart-header h2 {
+            margin: 0;
+            color: #fc6128;
+        }
+
+        .cart-header img {
+            height: 40px;
+        }
+
+        #cart-items {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .cart-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding: 10px;
+            border: 1px solid #eee;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+
+        .cart-item-details p {
+            margin: 0;
+            font-size: 0.9em;
+        }
+
+        .cart-item-details p:first-child {
+            font-weight: bold;
+            color: #555;
+        }
+
+        .cart-item-discount {
+            font-size: 0.8em;
+            color: green;
+            font-weight: bold;
+        }
+
+        .cart-item-quantity {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .cart-item-quantity input {
+            width: 40px;
+            text-align: center;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            padding: 5px;
+        }
+
+        .cart-item-quantity button {
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            padding: 5px 8px;
+            cursor: pointer;
+        }
+
+        .cart-item button {
+            background: none;
+            border: none;
+            font-size: 1.2em;
+            cursor: pointer;
+            color: red;
+            margin-left: 10px;
+        }
+
+        #send-order-button {
+            background-color: #f55e00;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.6 em;
+            width: 100%;
+            margin-top: 20px;
+            transition: background-color 0.3s ease;
+            font-weight: bold;
+        }
+
+        #send-order-button:hover {
+            background-color: #bf7002;
+        }
+
+        #send-order-button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        /* Sección de productos */
+        #products {
+            padding-top: 20px;
+        }
+
+        .category {
+            margin-bottom: 30px;
+        }
+
+        .category h2 {
+            background-color: #ffff14;
+            padding: 10px 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #fc530a;
+        }
+
+        .category-products {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .producto {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .producto img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+
+        .producto-info h3 {
+            margin-top: 0;
+            color: #555;
+            font-size: 1.2em;
+            min-height: 2.4em;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .producto-info p {
+            font-size: 1.1em;
+            color: #333;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .producto-info .no-stock {
+            color: red;
+            font-weight: bold;
+        }
+
+        .logo-propiedad {
+            /* ANTES: height: 22px; max-height: 22px; max-width: 22px; */
+            height: 28px;
+            /* Aumentado */
+            max-height: 28px;
+            /* Aumentado */
+            width: auto;
+            max-width: 28px;
+            /* Aumentado */
+            object-fit: contain;
+        }
+
+        .propiedades-container {
+            margin-bottom: 10px;
+            min-height: 25px;
+        }
+
+        .descripcion-container {
+            margin-bottom: 10px;
+            font-size: 0.9em;
+            color: #666;
+            text-align: left;
+            width: 100%;
+            position: relative;
+        }
+
+        .descripcion-corta {
+            display: block;
+        }
+
+        .descripcion-completa {
+            display: none;
+            margin-top: 5px;
+        }
+
+        .leer-mas-btn {
+            background: #04ba43;
+            border: none;
+            color: #ffffff;
+            cursor: pointer;
+            font-size: 1.5em;
+            padding: 0;
+            margin-left: 5px;
+            position: absolute;
+            right: 0;
+            top: 0;
+        }
+
+        .producto-actions {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .producto-actions input {
+            width: 60px;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .producto-actions button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .producto-actions button:hover {
+            background-color: #45a049;
+        }
+
+        .producto-actions button.no-stock-button {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        /* Botón de Scroll al Top en el footer (si existe) */
+        .scroll-to-top {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            z-index: 990;
+            transition: background-color 0.3s ease;
+        }
+
+        .scroll-to-top:hover {
+            background-color: #0056b3;
+        }
+
+        /* Notificaciones */
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #333;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            z-index: 2000;
+            opacity: 0;
+            animation: fadeinout 3s forwards;
+        }
+
+        @keyframes fadeinout {
+            0% {
+                opacity: 0;
+            }
+
+            10% {
+                opacity: 1;
+            }
+
+            90% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0;
+            }
+        }
+
+        /* Estilos para el nuevo escáner QR */
+        #qr-scanner-container {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 1500;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #qr-scanner-content {
+            background-color: #f29a5e;
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 90%;
+            width: 400px;
+            text-align: center;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            position: relative;
+        }
+
+        #qr-scanner-content h2 {
+            margin-top: 0;
+            color: #fc6128;
+        }
+
         #reader {
             width: 100%;
-            max-width: 400px;
-        }
-        .message {
             margin-top: 20px;
-            font-size: 1.2em;
-            text-align: center;
-            color: #fff;
+        }
+
+        #close-qr-scanner {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 2em;
+            cursor: pointer;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            body {
+                padding-top: 55px;
+            }
+
+            .fixed-icons {
+                padding: 5px 10px;
+            }
+
+            .fixed-icons button {
+                width: 40px;
+                height: 40px;
+                font-size: 1.2em;
+            }
+
+            #search {
+                top: 55px;
+                right: 10px;
+                max-width: calc(100% - 20px);
+            }
+
+            #cart {
+                top: 55px;
+                left: 10px;
+                width: calc(100% - 20px);
+            }
+
+            .category-products {
+                grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            }
+
+            .producto img {
+                height: 120px;
+            }
+
+            .menu-desplegable-contenido {
+                top: calc(100% + 5px);
+            }
+        }
+        /* ========================================================= */
+        /* --- MEDIA QUERIES para Responsive Design --- */
+        /* ========================================================= */
+
+        /* Ajustes para tabletas y dispositivos móviles grandes (ancho de pantalla hasta 768px) */
+        @media (max-width: 768px) {
+            .container {
+                margin: 15px auto;
+                padding: 15px;
+                border-width: 3px;
+            }
+
+            .fixed-icons {
+                top: 10px;
+                left: 10px;
+                gap: 5px;
+            }
+
+            .fixed-icons button {
+                width: 35px;
+                height: 35px;
+                font-size: 1.1em;
+                padding: 5px;
+            }
+
+            .fixed-icons button img {
+                height: 18px;
+            }
+
+            #search {
+                width: calc(100% - 40px);
+                left: 20px;
+                top: 50px;
+                margin: 10px 0;
+                padding: 10px;
+            }
+
+            #cart {
+                width: calc(100% - 40px);
+                left: 20px;
+                top: 50px;
+                max-height: 80vh;
+                padding: 15px;
+            }
+
+            .cart-header h2 {
+                font-size: 1.2em;
+            }
+
+            .cart-item-details p {
+                font-size: 0.8em;
+            }
+
+            .scroll-to-top {
+                bottom: 15px;
+                right: 15px;
+                padding: 10px;
+                font-size: 20px;
+            }
+
+            nav ul {
+                padding: 5px 10px;
+                margin-bottom: 15px;
+                justify-content: center;
+            }
+
+            nav ul li {
+                margin: 2px;
+            }
+
+            nav ul li a {
+                padding: 6px 12px;
+                font-size: 0.8em;
+            }
+
+            .category-products {
+                grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+                gap: 10px;
+            }
+
+            .producto {
+                padding: 5px;
+            }
+
+            .producto img {
+                width: 100%;
+                height: 80px;
+                object-fit: cover;
+                border-radius: 8px;
+            }
+
+            .producto h3 {
+                font-size: 0.8em;
+                min-height: unset;
+                line-height: 1.2;
+            }
+
+            .propiedades-container {
+                gap: 3px;
+                margin-bottom: 5px;
+            }
+
+            .logo-propiedad {
+                /* ANTES: height: 10px; max-height: 10px; max-width: 10px; */
+                height: 18px;
+                /* Aumentado */
+                max-height: 18px;
+                /* Aumentado */
+                max-width: 18px;
+                /* Aumentado */
+            }
+
+            .descripcion-corta,
+            .descripcion-completa {
+                font-size: 0.7em;
+            }
+
+            .leer-mas-btn {
+                font-size: 0.6em;
+            }
+
+            .producto-actions {
+                flex-direction: column;
+                gap: 3px;
+                padding-top: 5px;
+            }
+
+            .producto-actions input[type="number"] {
+                width: 35px;
+                padding: 3px;
+                font-size: 0.7em;
+            }
+
+            .producto-actions button {
+                padding: 6px 10px;
+                font-size: 0.8em;
+            }
+
+            #send-order-button {
+                padding: 10px;
+                font-size: 0.9em;
+            }
+        }
+
+        /* Para pantallas de celulares muy pequeños (ancho de pantalla hasta 480px) */
+        @media (max-width: 480px) {
+            .container {
+                margin: 5px auto;
+                padding: 8px;
+            }
+
+            .fixed-icons {
+                top: 5px;
+                left: 5px;
+                gap: 3px;
+            }
+
+            .fixed-icons button {
+                width: 30px;
+                height: 30px;
+                font-size: 1em;
+                padding: 3px;
+            }
+
+            .fixed-icons button img {
+                height: 16px;
+            }
+
+            #search {
+                left: 10px;
+                width: calc(100% - 20px);
+                top: 40px;
+            }
+
+            #cart {
+                left: 10px;
+                width: calc(100% - 20px);
+                top: 40px;
+            }
+
+            nav ul {
+                justify-content: center;
+                padding: 3px;
+            }
+
+            nav ul li {
+                margin: 2px;
+            }
+
+            nav ul li a {
+                padding: 4px 8px;
+                font-size: 0.7em;
+            }
+
+            .category-products {
+                grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+                gap: 5px;
+            }
+
+            .producto {
+                padding: 3px;
+            }
+
+            .producto img {
+                width: 100%;
+                height: 70px;
+                object-fit: cover;
+                border-radius: 6px;
+            }
+
+            .producto h3 {
+                font-size: 0.75em;
+            }
+
+            .producto-info p {
+                font-size: 0.9em;
+            }
+
+            .propiedades-container {
+                min-height: 15px;
+                margin-bottom: 3px;
+            }
+
+            .logo-propiedad {
+                /* ANTES: height: 8px; max-height: 8px; max-width: 8px; */
+                height: 15px;
+                /* Aumentado */
+                max-height: 15px;
+                /* Aumentado */
+                max-width: 15px;
+                /* Aumentado */
+            }
+
+            .descripcion-corta,
+            .descripcion-completa {
+                font-size: 0.65em;
+            }
+
+            .leer-mas-btn {
+                font-size: 0.55em;
+            }
+
+            .producto-actions input[type="number"] {
+                width: 30px;
+                padding: 2px;
+                font-size: 0.65em;
+            }
+
+            .producto-actions button {
+                padding: 5px 8px;
+                font-size: 0.7em;
+            }
         }
     </style>
 </head>
+
 <body>
-    <div id="reader"></div>
-    <div class="message">Escaneando código...</div>
+    <div class="fixed-icons">
+        <button id="scroll-top-icon" aria-label="Volver al inicio">
+            <img src="https://cdn-icons-png.flaticon.com/256/4510/4510643.png" alt="Logo Dietética Virgilio - Volver al Inicio" style="height: 20px; vertical-align: middle;">
+        </button>
+        <button id="cart-icon" class="icon-button" aria-label="Ver carrito de compras">
+            <i class="fas fa-shopping-cart"></i>
+            <span id="cart-count" class="cart-count">0</span>
+        </button>
+        <div class="menu-desplegable">
+            <button id="category-icon" class="icon-button" aria-label="Mostrar categorías">
+                <i class="fas fa-bars"></i>
+            </button>
+            <nav class="menu-desplegable-contenido" aria-label="Menú de categorías">
+                <ul>
+                </ul>
+            </nav>
+        </div>
+        <button id="search-icon" class="icon-button" aria-label="Buscar productos">
+            <i class="fas fa-search"></i>
+        </button>
+        <button id="qr-scan-icon" class="icon-button" aria-label="Escanear código QR">
+            <i class="fas fa-qrcode"></i>
+        </button>
+    </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+    <input type="text" id="search" placeholder="Buscar producto..." aria-label="Buscar productos" autocomplete="off">
+
+    <div id="qr-scanner-container">
+        <div id="qr-scanner-content">
+            <button id="close-qr-scanner" aria-label="Cerrar escáner">&times;</button>
+            <h2>Escanear Código QR</h2>
+            <iframe id="qr-iframe" src="./qr-scanner.html" style="width: 100%; height: 400px; border: none; display: none;" allow="camera"></iframe>
+        </div>
+    </div>
+
+
+    <div id="cart" aria-labelledby="cart-icon">
+        <div class="cart-header">
+            <h2>Mi Carrito</h2>
+            <img src="https://media.cylex.com.ar/companies/1128/0419/logo/logo.jpg" alt="Logo Dietética Virgilio">
+        </div>
+        <div id="cart-items-container">
+            <ul id="cart-items"></ul>
+        </div>
+        <p style="font-size: 1.1em; font-weight: bold; margin-top: 15px;">Subtotal: $<span id="cart-subtotal">0</span></p>
+        <p style="font-size: 0.9em; color: green; font-weight: bold;" id="cart-discount-message"></p>
+        <p style="font-size: 1.2em; font-weight: bold; margin-top: 5px;">Total final: $<span id="cart-total">0</span></p>
+        <button id="send-order-button">Enviar Pedido</button>
+    </div>
+
+    <section id="products" class="container">
+    </section>
+
+    <button class="scroll-to-top" id="scroll-to-top-footer" aria-label="Volver arriba"><i class="fas fa-arrow-up"></i></button>
+
     <script>
-        let html5QrcodeScanner;
+        // FIX: Se agregó un reseteo para evitar datos corruptos en el celular
+        const hasBeenReset = localStorage.getItem('cartReset');
+        if (!hasBeenReset) {
+          localStorage.clear();
+          localStorage.setItem('cartReset', 'true');
+        }
+        let cart = JSON.parse(localStorage.getItem('cart')) || [];
 
-        // Se ejecuta cuando el escáner detecta un código QR
-        function onScanSuccess(decodedText, decodedResult) {
-            console.log(`Código escaneado: ${decodedText}`);
+        // Esta URL es para la hoja de cálculo de Google Sheets. Asegúrate de que sea correcta y PUBLICA.
+        const productsUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTUwKkCP-utyR4uJzAuXrCr2div8FCqsTRN57HMLuY_a0BzuThRPn_ZkfymgPoElcPg5i6UsPEuvGGN/pub?output=csv';
 
-            // Envía el texto decodificado a la página principal
-            window.parent.postMessage({
-                type: 'qr-scan',
-                data: decodedText
-            }, '*');
+        // ! REEMPLAZA ESTAS URLs CON LAS URLs REALES Y ACCESIBLES DE TUS LOGOS
+        // ! Si estas URLs no son válidas, las imágenes de los logos no se mostrarán.
+        const logoSinTaccUrl = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR5T7nDfaM_05QQOmcKUhuZoU6CnTZt0Ig9bQ&s';
+        const logoVeganoUrl = ' https://encrypted-tbn0.gstatic.com/images?q=q=tbn:ANd9GcQrWh6bS_uu0DfLFB7tEsj4aojQqHJyzH8brQ&s';
+        const logoSinAzucarUrl = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSBK_h6dMpoVwkTRMSr3C3xV46pvgD2BstPhIfEu2WMn9YoxkQM97T456Q_wGZzvZ5j&usqp=CAU';
+        const logoSinSalUrl = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTHjYvblrFp9CXaSMblB_l1iDsTcTq9ridCqw&s';
+
+        let allProducts = []; // Variable para almacenar todos los productos cargados
+
+        // Constantes para la bonificación (definidas globalmente para acceso en múltiples funciones)
+        const DISCOUNT_THRESHOLD_10 = 10;
+        const DISCOUNT_PERCENTAGE_10 = 0.10;
+        const DISCOUNT_THRESHOLD_20 = 20;
+        const DISCOUNT_PERCENTAGE_20 = 0.20;
+
+        // --- Funciones principales de la aplicación ---
+
+        async function loadProducts() {
+            try {
+                console.log('🔵 Intentando cargar productos desde:', productsUrl);
+                const response = await fetch(productsUrl);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const csvData = await response.text();
+                console.log('🟢 CSV Data recibida (primeros 200 chars):', csvData.substring(0, 200) + '...');
+                allProducts = parseCSV(csvData);
+                console.log('🟢 Productos parseados:', allProducts);
+
+                // Después de cargar y parsear, actualiza la UI
+                displayProducts(allProducts);
+                generateCategoryMenu(allProducts);
+                setupSmoothScrolling(); // Llama a esto aquí para asegurar que los enlaces de categoría existen
+                console.log('✅ Carga de productos completada.');
+                updateCartDisplay(); // FIX: Actualiza el carrito al inicio
+
+            } catch (error) {
+                console.error('🔴 Error al cargar los productos:', error);
+                document.getElementById('products').innerHTML = '<p class="error">Error al cargar los productos. Por favor, intenta nuevamente más tarde.</p>';
+            }
         }
 
-        // Se ejecuta si el escaneo falla o hay un error
-        function onScanFailure(error) {
-            // Ignorar errores comunes para no sobrecargar la consola
+        function parseCSV(csvText) {
+            const lines = csvText.trim().split('\n');
+            if (lines.length <= 1) {
+                console.warn('🟡 CSV vacío o solo con encabezados. No se cargaron productos.');
+                return [];
+            }
+            // Eliminar espacios en blanco alrededor de los encabezados
+            const headers = lines[0].split(',').map(header => header.trim());
+            const products = [];
+
+            for (let i = 1; i < lines.length; i++) {
+                const values = lines[i].split(',');
+                const product = {};
+                // Verifica que el número de valores coincida con el número de encabezados
+                if (values.length !== headers.length) {
+                    console.warn(`🟡 Línea CSV mal formada (se esperaban ${headers.length} valores, se obtuvieron ${values.length}):`, lines[i]);
+                    continue; // Saltar esta línea si el número de valores no coincide con los encabezados
+                }
+                for (let j = 0; j < headers.length; j++) {
+                    product[headers[j]] = values[j] ? values[j].trim() : '';
+                }
+                products.push(product);
+            }
+            console.log('🟢 parseCSV: Productos finalizados:', products);
+            return products;
         }
 
-        // **Función para que la página principal inicie el escáner**
-        window.startScanner = function() {
-            if (!html5QrcodeScanner) {
-                html5QrcodeScanner = new Html5QrcodeScanner(
-                    "reader",
-                    { fps: 10, qrbox: { width: 250, height: 250 } },
-                    false
-                );
-            }
-            html5QrcodeScanner.render(onScanSuccess, onScanFailure);
-        };
+        function generateCategoryMenu(products) {
+            console.log('🔵 Generando menú de categorías...');
+            const categoryMenu = document.querySelector('.menu-desplegable-contenido ul');
+            // Asegúrate de filtrar categorías vacías o nulas
+            const uniqueCategories = [...new Set(products.map(product => product.Categoría).filter(cat => cat && cat.trim() !== ''))];
+            categoryMenu.innerHTML = ''; // Limpiar el menú anterior
 
-        // **Función para que la página principal detenga el escáner**
-        window.stopScanner = function() {
-            if (html5QrcodeScanner && html5QrcodeScanner.is
-            (is === 'running')) {
-                html5QrcodeScanner.stop().catch(err => console.error("Error al detener el escáner:", err));
+            uniqueCategories.sort().forEach(category => { // Ordenar categorías alfabéticamente
+                const listItem = document.createElement('li');
+                const link = document.createElement('a');
+                link.href = `#${normalizeText(category)}`; // Crear un ID basado en la categoría
+                link.textContent = category.replace(/🌻|🫚|🫘|❄️|-/g, '').trim(); // Limpiar el texto del enlace
+                listItem.appendChild(link);
+                categoryMenu.appendChild(listItem);
+            });
+            console.log('✅ Menú de categorías generado.');
+        }
+
+        function displayProducts(productsToDisplay) {
+            console.log('🔵 Mostrando productos...');
+            const productsContainer = document.getElementById('products');
+            productsContainer.innerHTML = ''; // Limpiar todo el contenido anterior al volver a mostrar
+
+            const categories = {};
+            // Re-organiza los productos por categoría
+            productsToDisplay.forEach(product => {
+                if (product.Categoría && product.Categoría.trim() !== '') {
+                    if (!categories[product.Categoría]) {
+                        categories[product.Categoría] = [];
+                    }
+                    categories[product.Categoría].push(product);
+                } else {
+                    console.warn('🟡 Producto sin categoría definida, se omitirá:', product);
+                }
+            });
+
+            // Recorre las categorías ordenadas
+            Object.keys(categories).sort().forEach(categoryId => {
+                const normalizedCategoryId = normalizeText(categoryId);
+                let categoryDiv = document.createElement('div');
+                categoryDiv.classList.add('category');
+                categoryDiv.id = normalizedCategoryId;
+
+                const h2 = document.createElement('h2');
+                h2.textContent = categoryId;
+                categoryDiv.appendChild(h2);
+
+                const categoryProductsDiv = document.createElement('div');
+                categoryProductsDiv.classList.add('category-products');
+                categoryDiv.appendChild(categoryProductsDiv);
+
+                productsContainer.appendChild(categoryDiv);
+                console.log(`🟢 Contenedor de categoría "${categoryId}" creado para display.`);
+
+
+                categories[categoryId].forEach(productData => {
+                    const productoDiv = document.createElement('div');
+                    productoDiv.classList.add('producto');
+                    productoDiv.dataset.nombre = productData['Nombre del Producto']; // Dataset para búsqueda
+
+                    const img = document.createElement('img');
+                    const imageUrl = productData['URL de la Imagen'];
+                    console.log(`🔵 Intentando cargar imagen para "${productData['Nombre del Producto']}": ${imageUrl}`);
+                    img.src = imageUrl;
+                    img.alt = productData['Nombre del Producto'] || 'Producto';
+                    productoDiv.appendChild(img);
+
+                    img.onerror = function() {
+                        console.error(`🔴 Error al cargar la imagen para "${productData['Nombre del Producto']}". URL: ${this.src}`);
+                        this.src = 'https://via.placeholder.com/150?text=Imagen+No+Disp.'; // Imagen de placeholder genérica
+                        this.alt = 'Imagen no disponible';
+                        this.style.border = '2px dashed red';
+                    };
+                    img.onload = function() {
+                        console.log(`🟢 Imagen cargada correctamente para "${productData['Nombre del Producto']}".`);
+                    };
+
+                    const productoInfoDiv = document.createElement('div');
+                    productoInfoDiv.classList.add('producto-info');
+
+                    const h3 = document.createElement('h3');
+                    h3.textContent = productData['Nombre del Producto'];
+                    productoInfoDiv.appendChild(h3);
+
+                    const precioP = document.createElement('p');
+                    const price = parseFloat(productData.Precio);
+                    const isInStock = price > 0; // Consideramos en stock si el precio es mayor a 0
+
+                    if (!isInStock) {
+                        precioP.textContent = 'STOCK NO DISPONIBLE';
+                        precioP.classList.add('no-stock');
+                    } else {
+                        precioP.textContent = `Precio: $${price.toFixed(2)}`;
+                    }
+                    productoInfoDiv.appendChild(precioP);
+
+                    // Contenedor para logos de propiedades
+                    const propiedadesContainer = document.createElement('div');
+                    propiedadesContainer.classList.add('propiedades-container');
+
+                    if (productData['Sin TACC'] === 'SI') {
+                        const imgSinTacc = document.createElement('img');
+                        imgSinTacc.src = logoSinTaccUrl;
+                        imgSinTacc.alt = 'Sin TACC';
+                        imgSinTacc.classList.add('logo-propiedad');
+                        imgSinTacc.title = 'Sin TACC';
+                        imgSinTacc.onerror = () => console.error('🔴 Error cargando logo Sin TACC:', logoSinTaccUrl);
+                        propiedadesContainer.appendChild(imgSinTacc);
+                    }
+                    if (productData['Vegano'] === 'SI') {
+                        const imgVegano = document.createElement('img');
+                        imgVegano.src = logoVeganoUrl;
+                        imgVegano.alt = 'Vegano';
+                        imgVegano.classList.add('logo-propiedad');
+                        imgVegano.title = 'Vegano';
+                        imgVegano.onerror = () => console.error('🔴 Error cargando logo Vegano:', logoVeganoUrl);
+                        propiedadesContainer.appendChild(imgVegano);
+                    }
+                    if (productData['Sin Azucar'] === 'SI') {
+                        const imgSinAzucar = document.createElement('img');
+                        imgSinAzucar.src = logoSinAzucarUrl;
+                        imgSinAzucar.alt = 'Sin Azúcar';
+                        imgSinAzucar.classList.add('logo-propiedad');
+                        imgSinAzucar.title = 'Sin Azúcar';
+                        imgSinAzucar.onerror = () => console.error('🔴 Error cargando logo Sin Azúcar:', logoSinAzucarUrl);
+                        propiedadesContainer.appendChild(imgSinAzucar);
+                    }
+                    if (productData['Sin Sal'] === 'SI') {
+                        const imgSinSal = document.createElement('img');
+                        imgSinSal.src = logoSinSalUrl;
+                        imgSinSal.alt = 'Sin Sal';
+                        imgSinSal.classList.add('logo-propiedad');
+                        imgSinSal.title = 'Sin Sal';
+                        imgSinSal.onerror = () => console.error('🔴 Error cargando logo Sin Sal:', logoSinSalUrl);
+                        propiedadesContainer.appendChild(imgSinSal);
+                    }
+
+                    productoInfoDiv.appendChild(propiedadesContainer);
+
+
+                    // Descripción corta y "leer más"
+                    if (productData['Descripcion']) {
+                        const descripcionContainer = document.createElement('div');
+                        descripcionContainer.classList.add('descripcion-container');
+
+                        const descripcionCompleta = productData['Descripcion'].trim();
+                        const palabras = descripcionCompleta.split(' ');
+                        const descripcionCorta = palabras.length > 10 ? palabras.slice(0, 10).join(' ') + '...' : descripcionCompleta;
+
+                        const spanCorta = document.createElement('span');
+                        spanCorta.classList.add('descripcion-corta');
+                        spanCorta.textContent = descripcionCorta;
+                        descripcionContainer.appendChild(spanCorta);
+
+                        if (palabras.length > 10) {
+                            const spanCompleta = document.createElement('span');
+                            spanCompleta.classList.add('descripcion-completa');
+                            spanCompleta.textContent = descripcionCompleta;
+                            descripcionContainer.appendChild(spanCompleta);
+
+                            const leerMasBtn = document.createElement('button');
+                            leerMasBtn.classList.add('leer-mas-btn');
+                            leerMasBtn.innerHTML = '&#9660;'; // Flecha hacia abajo
+                            leerMasBtn.onclick = function() {
+                                if (spanCompleta.style.display === 'none') {
+                                    spanCompleta.style.display = 'inline';
+                                    spanCorta.style.display = 'none';
+                                    leerMasBtn.innerHTML = '&#9650;'; // Flecha hacia arriba
+                                } else {
+                                    spanCompleta.style.display = 'none';
+                                    spanCorta.style.display = 'inline';
+                                    leerMasBtn.innerHTML = '&#9660;';
+                                }
+                            };
+                            descripcionContainer.appendChild(leerMasBtn);
+                        }
+                        productoInfoDiv.appendChild(descripcionContainer);
+                    }
+
+
+                    const productoActionsDiv = document.createElement('div');
+                    productoActionsDiv.classList.add('producto-actions');
+
+                    const quantityInput = document.createElement('input');
+                    quantityInput.type = 'number';
+                    quantityInput.min = 1;
+                    quantityInput.value = 1;
+                    quantityInput.disabled = !isInStock;
+                    productoActionsDiv.appendChild(quantityInput);
+
+                    const addButton = document.createElement('button');
+                    addButton.textContent = 'Agregar';
+                    addButton.disabled = !isInStock;
+                    if (!isInStock) {
+                        addButton.classList.add('no-stock-button');
+                    }
+                    addButton.onclick = () => {
+                        const quantity = parseInt(quantityInput.value);
+                        if (quantity > 0) {
+                            addToCart(productData, quantity);
+                        }
+                    };
+                    productoActionsDiv.appendChild(addButton);
+
+                    productoDiv.appendChild(productoInfoDiv);
+                    productoDiv.appendChild(productoActionsDiv);
+                    categoryProductsDiv.appendChild(productoDiv);
+                });
+            });
+            console.log('✅ Productos mostrados.');
+        }
+
+        function normalizeText(text) {
+            return text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+        }
+
+        function addToCart(product, quantity = 1) {
+            const existingItem = cart.find(item => item.name === product['Nombre del Producto']);
+            if (existingItem) {
+                existingItem.quantity += quantity;
+            } else {
+                cart.push({
+                    name: product['Nombre del Producto'],
+                    price: parseFloat(product.Precio),
+                    quantity: quantity
+                });
             }
-        };
+            localStorage.setItem('cart', JSON.stringify(cart));
+            updateCartDisplay();
+            showNotification(`${quantity}x ${product['Nombre del Producto']} agregado al carrito.`);
+        }
+        
+        function updateCartDisplay() {
+            const cartItemsContainer = document.getElementById('cart-items');
+            cartItemsContainer.innerHTML = '';
+            let subtotal = 0;
+            let finalTotal = 0;
+
+            cart.forEach(item => {
+                let itemPrice = item.price;
+                let itemDiscount = 0;
+                let itemTotal = item.price * item.quantity;
+                let discountMessage = '';
+
+                // Aplica descuento por producto
+                if (item.quantity >= DISCOUNT_THRESHOLD_20) {
+                    itemDiscount = itemPrice * DISCOUNT_PERCENTAGE_20;
+                    itemTotal = (itemPrice - itemDiscount) * item.quantity;
+                    discountMessage = ` (-20%)`;
+                } else if (item.quantity >= DISCOUNT_THRESHOLD_10) {
+                    itemDiscount = itemPrice * DISCOUNT_PERCENTAGE_10;
+                    itemTotal = (itemPrice - itemDiscount) * item.quantity;
+                    discountMessage = ` (-10%)`;
+                }
+
+                const li = document.createElement('li');
+                li.classList.add('cart-item');
+                li.innerHTML = `
+                    <div class="cart-item-details">
+                        <p>${item.name}</p>
+                        <p>Cant: ${item.quantity} | Total: $${itemTotal.toFixed(2)}<span style="color: green;">${discountMessage}</span></p>
+                    </div>
+                    <div class="cart-item-quantity">
+                        <button class="decrease-quantity" data-name="${item.name}">-</button>
+                        <input type="number" value="${item.quantity}" min="1" data-name="${item.name}">
+                        <button class="increase-quantity" data-name="${item.name}">+</button>
+                    </div>
+                    <button class="remove-item" data-name="${item.name}">&times;</button>
+                `;
+                cartItemsContainer.appendChild(li);
+
+                subtotal += item.price * item.quantity;
+                finalTotal += itemTotal;
+            });
+
+            document.getElementById('cart-subtotal').textContent = subtotal.toFixed(2);
+            const totalDiscountAmount = subtotal - finalTotal;
+            if (totalDiscountAmount > 0) {
+                document.getElementById('cart-discount-message').textContent = `Descuento total: -$${totalDiscountAmount.toFixed(2)}`;
+            } else {
+                document.getElementById('cart-discount-message').textContent = '';
+            }
+            document.getElementById('cart-total').textContent = finalTotal.toFixed(2);
+
+            // CÓDIGO CORREGIDO PARA CONTAR LA CANTIDAD DE ARTÍCULOS DIFERENTES
+            const cartCountElement = document.getElementById('cart-count');
+            const totalArticles = cart.length; // Cuenta el número de elementos en el array 'cart'
+            cartCountElement.textContent = totalArticles;
+            cartCountElement.style.display = totalArticles > 0 ? 'flex' : 'none';
+
+            document.getElementById('send-order-button').disabled = cart.length === 0;
+
+            const oldCartItemsContainer = document.getElementById('cart-items');
+            const newCartItemsContainer = oldCartItemsContainer.cloneNode(true);
+            oldCartItemsContainer.parentNode.replaceChild(newCartItemsContainer, oldCartItemsContainer);
+            attachCartEventListeners();
+        }
+
+        // FIX: La función de event listeners fue completamente reescrita para evitar el congelamiento
+        function attachCartEventListeners() {
+            const cartItemsContainer = document.getElementById('cart-items');
+            if (!cartItemsContainer) return;
+
+            cartItemsContainer.addEventListener('click', (event) => {
+                const target = event.target;
+                const productName = target.dataset.name;
+
+                if (!productName) return;
+
+                const item = cart.find(i => i.name === productName);
+                if (!item) return;
+
+                if (target.classList.contains('increase-quantity')) {
+                    item.quantity++;
+                } else if (target.classList.contains('decrease-quantity')) {
+                    if (item.quantity > 1) {
+                        item.quantity--;
+                    }
+                } else if (target.classList.contains('remove-item')) {
+                    cart = cart.filter(i => i.name !== productName);
+                }
+
+                localStorage.setItem('cart', JSON.stringify(cart));
+                updateCartDisplay();
+            });
+
+            document.querySelectorAll('#cart-items input[type="number"]').forEach(input => {
+                input.onchange = (e) => {
+                    const productName = e.target.dataset.name;
+                    const newQuantity = parseInt(e.target.value, 10);
+                    const item = cart.find(i => i.name === productName);
+                    if (item && newQuantity >= 1) {
+                        item.quantity = newQuantity;
+                    } else if (item && newQuantity < 1) {
+                        cart = cart.filter(i => i.name !== productName);
+                    }
+                    localStorage.setItem('cart', JSON.stringify(cart));
+                    updateCartDisplay();
+                };
+            });
+        }
+
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.classList.add('notification');
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            setTimeout(() => {
+                notification.remove();
+            }, 3000); // Duración de 3 segundos
+        }
+
+        function setupSmoothScrolling() {
+            document.querySelectorAll('.menu-desplegable-contenido ul li a').forEach(anchor => {
+                anchor.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    document.querySelector(this.getAttribute('href')).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                    document.querySelector('.menu-desplegable-contenido').style.display = 'none'; // Cierra el menú
+                });
+            });
+        }
+
+        function startQrScanner() {
+            const qrScannerContainer = document.getElementById('qr-scanner-container');
+            const qrIframe = document.getElementById('qr-iframe');
+            qrScannerContainer.style.display = 'flex';
+            // IMPORTANTE: Asegúrate de que el iframe esté completamente cargado antes de llamar a la función
+            qrIframe.onload = function() {
+                if (qrIframe.contentWindow && qrIframe.contentWindow.startScanner) {
+                    qrIframe.contentWindow.startScanner();
+                } else {
+                    console.error("No se pudo iniciar el escáner. La función startScanner no está disponible en el iframe.");
+                }
+            };
+            // Si el iframe ya está cargado, lo iniciamos directamente
+            if (qrIframe.contentWindow && qrIframe.contentWindow.startScanner) {
+                qrIframe.contentWindow.startScanner();
+            }
+        }
+        
+        function stopQrScanner() {
+            const qrIframe = document.getElementById('qr-iframe');
+            if (qrIframe.contentWindow && qrIframe.contentWindow.stopScanner) {
+                qrIframe.contentWindow.stopScanner();
+            }
+            document.getElementById('qr-scanner-container').style.display = 'none';
+        }
+
+        function handleButtonClick(event) {
+            const buttonId = event.currentTarget.id;
+            const cartPanel = document.getElementById('cart');
+            const searchInput = document.getElementById('search');
+            const categoryMenu = document.querySelector('.menu-desplegable-contenido');
+            
+            // Cierra todos los paneles antes de abrir uno nuevo
+            cartPanel.style.display = 'none';
+            searchInput.style.display = 'none';
+            categoryMenu.style.display = 'none';
+            stopQrScanner(); // Detiene el escáner si está activo
+
+            switch (buttonId) {
+                case 'cart-icon':
+                    cartPanel.style.display = 'block';
+                    break;
+                case 'search-icon':
+                    searchInput.style.display = 'block';
+                    break;
+                case 'category-icon':
+                    categoryMenu.style.display = 'block';
+                    break;
+                case 'qr-scan-icon':
+                    startQrScanner();
+                    break;
+            }
+        }
+
+        document.getElementById('scroll-top-icon').addEventListener('click', () => {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+        document.getElementById('scroll-to-top-footer').addEventListener('click', () => {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+
+        // Event Listeners para los botones de la barra fija
+        document.getElementById('cart-icon').addEventListener('click', handleButtonClick);
+        document.getElementById('search-icon').addEventListener('click', handleButtonClick);
+        document.getElementById('category-icon').addEventListener('click', handleButtonClick);
+        document.getElementById('qr-scan-icon').addEventListener('click', handleButtonClick);
+
+        // Event Listener para el botón de cerrar del escáner
+        document.getElementById('close-qr-scanner').addEventListener('click', stopQrScanner);
+
+        // Lógica de búsqueda
+        document.getElementById('search').addEventListener('input', (event) => {
+            const searchTerm = normalizeText(event.target.value);
+            const filteredProducts = allProducts.filter(product => {
+                const productName = normalizeText(product['Nombre del Producto']);
+                const productCategory = normalizeText(product.Categoría);
+                return productName.includes(searchTerm) || productCategory.includes(searchTerm);
+            });
+            displayProducts(filteredProducts);
+        });
+
+        // Lógica para enviar el pedido por WhatsApp
+        document.getElementById('send-order-button').addEventListener('click', () => {
+            if (cart.length === 0) {
+                alert('El carrito está vacío.');
+                return;
+            }
+
+            let message = 'Hola, me gustaría hacer un pedido:\n\n';
+            let finalTotal = 0;
+
+            cart.forEach(item => {
+                let itemPrice = item.price;
+                let itemDiscount = 0;
+                let itemTotal = item.price * item.quantity;
+
+                if (item.quantity >= DISCOUNT_THRESHOLD_20) {
+                    itemDiscount = itemPrice * DISCOUNT_PERCENTAGE_20;
+                    itemTotal = (itemPrice - itemDiscount) * item.quantity;
+                } else if (item.quantity >= DISCOUNT_THRESHOLD_10) {
+                    itemDiscount = itemPrice * DISCOUNT_PERCENTAGE_10;
+                    itemTotal = (itemPrice - itemDiscount) * item.quantity;
+                }
+
+                message += `* ${item.name} - Cantidad: ${item.quantity} - Subtotal: $${itemTotal.toFixed(2)}\n`;
+                finalTotal += itemTotal;
+            });
+
+            message += `\n*TOTAL: $${finalTotal.toFixed(2)}*\n\n`;
+            message += '¡Gracias!';
+
+            const whatsappUrl = `https://wa.me/XXXXXXXXXX?text=${encodeURIComponent(message)}`;
+            window.open(whatsappUrl, '_blank');
+        });
+
+        // Lógica para recibir el mensaje del iframe
+        window.addEventListener('message', (event) => {
+            if (event.data.type === 'qr-scan') {
+                const decodedText = event.data.data;
+                
+                // Oculta el contenedor del escáner
+                stopQrScanner();
+
+                const normalizedDecodedText = decodedText.toLowerCase().trim();
+                const product = allProducts.find(p => p['Nombre del Producto'].toLowerCase().trim() === normalizedDecodedText);
+
+                if (product) {
+                    addToCart(product, 1);
+                    showNotification(`Producto escaneado y agregado: ${product['Nombre del Producto']}`);
+                } else {
+                    showNotification(`Producto "${decodedText}" no encontrado.`);
+                    console.warn(`No se encontró un producto para el texto: "${decodedText}"`);
+                }
+            }
+        });
+
+        // Carga los productos al iniciar la página y actualiza el carrito
+        document.addEventListener('DOMContentLoaded', () => {
+            loadProducts();
+            attachCartEventListeners();
+        });
     </script>
 </body>
+
 </html>
