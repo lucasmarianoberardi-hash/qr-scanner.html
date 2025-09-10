@@ -34,30 +34,43 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
     <script>
-        // Esta función se ejecuta cuando el escáner detecta un código QR
+        let html5QrcodeScanner;
+
+        // Se ejecuta cuando el escáner detecta un código QR
         function onScanSuccess(decodedText, decodedResult) {
             console.log(`Código escaneado: ${decodedText}`);
 
-            // Envía el texto decodificado a la página principal (index.html)
+            // Envía el texto decodificado a la página principal
             window.parent.postMessage({
                 type: 'qr-scan',
                 data: decodedText
-            }, '*'); // El '*' permite enviar a cualquier origen, ideal para desarrollo
-
-            // Ya no es necesario detener el escáner aquí, el evento de cierre de la ventana principal lo hace.
+            }, '*');
         }
 
-        // Esta función se ejecuta si el escaneo falla o hay un error
+        // Se ejecuta si el escaneo falla o hay un error
         function onScanFailure(error) {
             // Ignorar errores comunes para no sobrecargar la consola
         }
 
-        const html5QrcodeScanner = new Html5QrcodeScanner(
-            "reader", // ID del elemento donde se mostrará el escáner
-            { fps: 10, qrbox: { width: 250, height: 250 } }, // Configuración del escáner
-            false // No mostrar el "verbose" o logs detallados
-        );
-        html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+        // **Función para que la página principal inicie el escáner**
+        window.startScanner = function() {
+            if (!html5QrcodeScanner) {
+                html5QrcodeScanner = new Html5QrcodeScanner(
+                    "reader",
+                    { fps: 10, qrbox: { width: 250, height: 250 } },
+                    false
+                );
+            }
+            html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+        };
+
+        // **Función para que la página principal detenga el escáner**
+        window.stopScanner = function() {
+            if (html5QrcodeScanner && html5QrcodeScanner.is
+            (is === 'running')) {
+                html5QrcodeScanner.stop().catch(err => console.error("Error al detener el escáner:", err));
+            }
+        };
     </script>
 </body>
 </html>
