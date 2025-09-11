@@ -7,6 +7,7 @@
     <title>Dietética Virgilio</title>
     <link rel="icon" href="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQoa73x-hEFikC_kBsIAL1pjuzpj_9fPwyZ-dI-C7f-JSLqKxiUCEnlB8KejiD5R8_aHuk&usqp=CAU" type="image/x-icon">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/quagga/dist/quagga.min.js"></script>
     <style>
         /* Estilos generales */
         body {
@@ -124,7 +125,7 @@
         }
 
         .menu-desplegable-contenido ul li a:hover {
-            background-color: ##f5e5d5;
+            background-color: #f5e5d5;
         }
 
         /* Campo de búsqueda */
@@ -250,7 +251,7 @@
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            font-size: 1.6 em;
+            font-size: 1.6em;
             width: 100%;
             margin-top: 20px;
             transition: background-color 0.3s ease;
@@ -336,14 +337,10 @@
         }
 
         .logo-propiedad {
-            /* ANTES: height: 22px; max-height: 22px; max-width: 22px; */
             height: 28px;
-            /* Aumentado */
             max-height: 28px;
-            /* Aumentado */
             width: auto;
             max-width: 28px;
-            /* Aumentado */
             object-fit: contain;
         }
 
@@ -523,6 +520,40 @@
             cursor: pointer;
         }
 
+        #interactive.viewport {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        #interactive.viewport > canvas,
+        #interactive.viewport > video {
+            display: block;
+            width: 100%;
+            height: auto;
+            object-fit: contain;
+        }
+
+        .drawingBuffer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        #camera-status {
+            color: white;
+            font-family: Arial, sans-serif;
+            font-size: 1.2em;
+            margin-top: 10px;
+        }
+
+        #camera-status.error {
+            color: red;
+            font-weight: bold;
+        }
+
         /* Responsive Design */
         @media (max-width: 768px) {
             body {
@@ -567,6 +598,7 @@
                 top: calc(100% + 5px);
             }
         }
+
         /* ========================================================= */
         /* --- MEDIA QUERIES para Responsive Design --- */
         /* ========================================================= */
@@ -670,13 +702,9 @@
             }
 
             .logo-propiedad {
-                /* ANTES: height: 10px; max-height: 10px; max-width: 10px; */
                 height: 18px;
-                /* Aumentado */
                 max-height: 18px;
-                /* Aumentado */
                 max-width: 18px;
-                /* Aumentado */
             }
 
             .descripcion-corta,
@@ -791,13 +819,9 @@
             }
 
             .logo-propiedad {
-                /* ANTES: height: 8px; max-height: 8px; max-width: 8px; */
                 height: 15px;
-                /* Aumentado */
                 max-height: 15px;
-                /* Aumentado */
                 max-width: 15px;
-                /* Aumentado */
             }
 
             .descripcion-corta,
@@ -855,7 +879,8 @@
         <div id="qr-scanner-content">
             <button id="close-qr-scanner" aria-label="Cerrar escáner">&times;</button>
             <h2>Escanear Código QR</h2>
-            <iframe id="qr-iframe" src="./qr-scanner.html" style="width: 100%; height: 400px; border: none; display: none;" allow="camera"></iframe>
+            <div id="interactive" class="viewport"></div>
+            <div id="camera-status"></div>
         </div>
     </div>
 
@@ -883,50 +908,41 @@
         // FIX: Se agregó un reseteo para evitar datos corruptos en el celular
         const hasBeenReset = localStorage.getItem('cartReset');
         if (!hasBeenReset) {
-          localStorage.clear();
-          localStorage.setItem('cartReset', 'true');
+            localStorage.clear();
+            localStorage.setItem('cartReset', 'true');
         }
         let cart = JSON.parse(localStorage.getItem('cart')) || [];
 
-        // Esta URL es para la hoja de cálculo de Google Sheets. Asegúrate de que sea correcta y PUBLICA.
         const productsUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTUwKkCP-utyR4uJzAuXrCr2div8FCqsTRN57HMLuY_a0BzuThRPn_ZkfymgPoElcPg5i6UsPEuvGGN/pub?output=csv';
 
-        // ! REEMPLAZA ESTAS URLs CON LAS URLs REALES Y ACCESIBLES DE TUS LOGOS
-        // ! Si estas URLs no son válidas, las imágenes de los logos no se mostrarán.
         const logoSinTaccUrl = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR5T7nDfaM_05QQOmcKUhuZoU6CnTZt0Ig9bQ&s';
         const logoVeganoUrl = ' https://encrypted-tbn0.gstatic.com/images?q=q=tbn:ANd9GcQrWh6bS_uu0DfLFB7tEsj4aojQqHJyzH8brQ&s';
         const logoSinAzucarUrl = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSBK_h6dMpoVwkTRMSr3C3xV46pvgD2BstPhIfEu2WMn9YoxkQM97T456Q_wGZzvZ5j&usqp=CAU';
         const logoSinSalUrl = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTHjYvblrFp9CXaSMblB_l1iDsTcTq9ridCqw&s';
 
-        let allProducts = []; // Variable para almacenar todos los productos cargados
+        let allProducts = [];
 
-        // Constantes para la bonificación (definidas globalmente para acceso en múltiples funciones)
         const DISCOUNT_THRESHOLD_10 = 10;
         const DISCOUNT_PERCENTAGE_10 = 0.10;
         const DISCOUNT_THRESHOLD_20 = 20;
         const DISCOUNT_PERCENTAGE_20 = 0.20;
 
+        let isScannerRunning = false;
+        
         // --- Funciones principales de la aplicación ---
 
         async function loadProducts() {
             try {
-                console.log('🔵 Intentando cargar productos desde:', productsUrl);
                 const response = await fetch(productsUrl);
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 const csvData = await response.text();
-                console.log('🟢 CSV Data recibida (primeros 200 chars):', csvData.substring(0, 200) + '...');
                 allProducts = parseCSV(csvData);
-                console.log('🟢 Productos parseados:', allProducts);
-
-                // Después de cargar y parsear, actualiza la UI
                 displayProducts(allProducts);
                 generateCategoryMenu(allProducts);
-                setupSmoothScrolling(); // Llama a esto aquí para asegurar que los enlaces de categoría existen
-                console.log('✅ Carga de productos completada.');
-                updateCartDisplay(); // FIX: Actualiza el carrito al inicio
-
+                setupSmoothScrolling();
+                updateCartDisplay();
             } catch (error) {
                 console.error('🔴 Error al cargar los productos:', error);
                 document.getElementById('products').innerHTML = '<p class="error">Error al cargar los productos. Por favor, intenta nuevamente más tarde.</p>';
@@ -936,67 +952,53 @@
         function parseCSV(csvText) {
             const lines = csvText.trim().split('\n');
             if (lines.length <= 1) {
-                console.warn('🟡 CSV vacío o solo con encabezados. No se cargaron productos.');
                 return [];
             }
-            // Eliminar espacios en blanco alrededor de los encabezados
             const headers = lines[0].split(',').map(header => header.trim());
             const products = [];
-
             for (let i = 1; i < lines.length; i++) {
                 const values = lines[i].split(',');
                 const product = {};
-                // Verifica que el número de valores coincida con el número de encabezados
                 if (values.length !== headers.length) {
-                    console.warn(`🟡 Línea CSV mal formada (se esperaban ${headers.length} valores, se obtuvieron ${values.length}):`, lines[i]);
-                    continue; // Saltar esta línea si el número de valores no coincide con los encabezados
+                    continue;
                 }
                 for (let j = 0; j < headers.length; j++) {
                     product[headers[j]] = values[j] ? values[j].trim() : '';
                 }
                 products.push(product);
             }
-            console.log('🟢 parseCSV: Productos finalizados:', products);
             return products;
         }
 
         function generateCategoryMenu(products) {
-            console.log('🔵 Generando menú de categorías...');
             const categoryMenu = document.querySelector('.menu-desplegable-contenido ul');
-            // Asegúrate de filtrar categorías vacías o nulas
             const uniqueCategories = [...new Set(products.map(product => product.Categoría).filter(cat => cat && cat.trim() !== ''))];
-            categoryMenu.innerHTML = ''; // Limpiar el menú anterior
+            categoryMenu.innerHTML = '';
 
-            uniqueCategories.sort().forEach(category => { // Ordenar categorías alfabéticamente
+            uniqueCategories.sort().forEach(category => {
                 const listItem = document.createElement('li');
                 const link = document.createElement('a');
-                link.href = `#${normalizeText(category)}`; // Crear un ID basado en la categoría
-                link.textContent = category.replace(/🌻|🫚|🫘|❄️|-/g, '').trim(); // Limpiar el texto del enlace
+                link.href = `#${normalizeText(category)}`;
+                link.textContent = category.replace(/🌻|🫚|🫘|❄️|-/g, '').trim();
                 listItem.appendChild(link);
                 categoryMenu.appendChild(listItem);
             });
-            console.log('✅ Menú de categorías generado.');
         }
 
         function displayProducts(productsToDisplay) {
-            console.log('🔵 Mostrando productos...');
             const productsContainer = document.getElementById('products');
-            productsContainer.innerHTML = ''; // Limpiar todo el contenido anterior al volver a mostrar
+            productsContainer.innerHTML = '';
 
             const categories = {};
-            // Re-organiza los productos por categoría
             productsToDisplay.forEach(product => {
                 if (product.Categoría && product.Categoría.trim() !== '') {
                     if (!categories[product.Categoría]) {
                         categories[product.Categoría] = [];
                     }
                     categories[product.Categoría].push(product);
-                } else {
-                    console.warn('🟡 Producto sin categoría definida, se omitirá:', product);
                 }
             });
 
-            // Recorre las categorías ordenadas
             Object.keys(categories).sort().forEach(categoryId => {
                 const normalizedCategoryId = normalizeText(categoryId);
                 let categoryDiv = document.createElement('div');
@@ -1012,29 +1014,22 @@
                 categoryDiv.appendChild(categoryProductsDiv);
 
                 productsContainer.appendChild(categoryDiv);
-                console.log(`🟢 Contenedor de categoría "${categoryId}" creado para display.`);
-
 
                 categories[categoryId].forEach(productData => {
                     const productoDiv = document.createElement('div');
                     productoDiv.classList.add('producto');
-                    productoDiv.dataset.nombre = productData['Nombre del Producto']; // Dataset para búsqueda
+                    productoDiv.dataset.nombre = productData['Nombre del Producto'];
 
                     const img = document.createElement('img');
                     const imageUrl = productData['URL de la Imagen'];
-                    console.log(`🔵 Intentando cargar imagen para "${productData['Nombre del Producto']}": ${imageUrl}`);
                     img.src = imageUrl;
                     img.alt = productData['Nombre del Producto'] || 'Producto';
                     productoDiv.appendChild(img);
 
                     img.onerror = function() {
-                        console.error(`🔴 Error al cargar la imagen para "${productData['Nombre del Producto']}". URL: ${this.src}`);
-                        this.src = 'https://via.placeholder.com/150?text=Imagen+No+Disp.'; // Imagen de placeholder genérica
+                        this.src = 'https://via.placeholder.com/150?text=Imagen+No+Disp.';
                         this.alt = 'Imagen no disponible';
                         this.style.border = '2px dashed red';
-                    };
-                    img.onload = function() {
-                        console.log(`🟢 Imagen cargada correctamente para "${productData['Nombre del Producto']}".`);
                     };
 
                     const productoInfoDiv = document.createElement('div');
@@ -1046,7 +1041,7 @@
 
                     const precioP = document.createElement('p');
                     const price = parseFloat(productData.Precio);
-                    const isInStock = price > 0; // Consideramos en stock si el precio es mayor a 0
+                    const isInStock = price > 0;
 
                     if (!isInStock) {
                         precioP.textContent = 'STOCK NO DISPONIBLE';
@@ -1056,7 +1051,6 @@
                     }
                     productoInfoDiv.appendChild(precioP);
 
-                    // Contenedor para logos de propiedades
                     const propiedadesContainer = document.createElement('div');
                     propiedadesContainer.classList.add('propiedades-container');
 
@@ -1066,7 +1060,6 @@
                         imgSinTacc.alt = 'Sin TACC';
                         imgSinTacc.classList.add('logo-propiedad');
                         imgSinTacc.title = 'Sin TACC';
-                        imgSinTacc.onerror = () => console.error('🔴 Error cargando logo Sin TACC:', logoSinTaccUrl);
                         propiedadesContainer.appendChild(imgSinTacc);
                     }
                     if (productData['Vegano'] === 'SI') {
@@ -1075,7 +1068,6 @@
                         imgVegano.alt = 'Vegano';
                         imgVegano.classList.add('logo-propiedad');
                         imgVegano.title = 'Vegano';
-                        imgVegano.onerror = () => console.error('🔴 Error cargando logo Vegano:', logoVeganoUrl);
                         propiedadesContainer.appendChild(imgVegano);
                     }
                     if (productData['Sin Azucar'] === 'SI') {
@@ -1084,7 +1076,6 @@
                         imgSinAzucar.alt = 'Sin Azúcar';
                         imgSinAzucar.classList.add('logo-propiedad');
                         imgSinAzucar.title = 'Sin Azúcar';
-                        imgSinAzucar.onerror = () => console.error('🔴 Error cargando logo Sin Azúcar:', logoSinAzucarUrl);
                         propiedadesContainer.appendChild(imgSinAzucar);
                     }
                     if (productData['Sin Sal'] === 'SI') {
@@ -1093,18 +1084,13 @@
                         imgSinSal.alt = 'Sin Sal';
                         imgSinSal.classList.add('logo-propiedad');
                         imgSinSal.title = 'Sin Sal';
-                        imgSinSal.onerror = () => console.error('🔴 Error cargando logo Sin Sal:', logoSinSalUrl);
                         propiedadesContainer.appendChild(imgSinSal);
                     }
-
                     productoInfoDiv.appendChild(propiedadesContainer);
 
-
-                    // Descripción corta y "leer más"
                     if (productData['Descripcion']) {
                         const descripcionContainer = document.createElement('div');
                         descripcionContainer.classList.add('descripcion-container');
-
                         const descripcionCompleta = productData['Descripcion'].trim();
                         const palabras = descripcionCompleta.split(' ');
                         const descripcionCorta = palabras.length > 10 ? palabras.slice(0, 10).join(' ') + '...' : descripcionCompleta;
@@ -1122,12 +1108,12 @@
 
                             const leerMasBtn = document.createElement('button');
                             leerMasBtn.classList.add('leer-mas-btn');
-                            leerMasBtn.innerHTML = '&#9660;'; // Flecha hacia abajo
+                            leerMasBtn.innerHTML = '&#9660;';
                             leerMasBtn.onclick = function() {
                                 if (spanCompleta.style.display === 'none') {
                                     spanCompleta.style.display = 'inline';
                                     spanCorta.style.display = 'none';
-                                    leerMasBtn.innerHTML = '&#9650;'; // Flecha hacia arriba
+                                    leerMasBtn.innerHTML = '&#9650;';
                                 } else {
                                     spanCompleta.style.display = 'none';
                                     spanCorta.style.display = 'inline';
@@ -1138,7 +1124,6 @@
                         }
                         productoInfoDiv.appendChild(descripcionContainer);
                     }
-
 
                     const productoActionsDiv = document.createElement('div');
                     productoActionsDiv.classList.add('producto-actions');
@@ -1169,7 +1154,6 @@
                     categoryProductsDiv.appendChild(productoDiv);
                 });
             });
-            console.log('✅ Productos mostrados.');
         }
 
         function normalizeText(text) {
@@ -1191,11 +1175,10 @@
             updateCartDisplay();
             showNotification(`${quantity}x ${product['Nombre del Producto']} agregado al carrito.`);
         }
-        
-        // --- CÓDIGO CORREGIDO PARA EVITAR EL ERROR DE REMOVECHILD ---
+
         function updateCartDisplay() {
             const cartItemsContainer = document.getElementById('cart-items');
-            cartItemsContainer.innerHTML = ''; // Limpiar el contenido del carrito
+            cartItemsContainer.innerHTML = '';
 
             let subtotal = 0;
             let finalTotal = 0;
@@ -1205,7 +1188,6 @@
                 let itemTotal = itemPrice * item.quantity;
                 let discountMessage = '';
 
-                // Aplica descuento por producto
                 if (item.quantity >= DISCOUNT_THRESHOLD_20) {
                     itemPrice = itemPrice * (1 - DISCOUNT_PERCENTAGE_20);
                     itemTotal = itemPrice * item.quantity;
@@ -1232,8 +1214,8 @@
                 `;
                 cartItemsContainer.appendChild(li);
 
-                subtotal += item.price * item.quantity; // subtotal sin descuentos
-                finalTotal += itemTotal; // total con descuentos aplicados
+                subtotal += item.price * item.quantity;
+                finalTotal += itemTotal;
             });
 
             document.getElementById('cart-subtotal').textContent = subtotal.toFixed(2);
@@ -1252,7 +1234,6 @@
 
             document.getElementById('send-order-button').disabled = cart.length === 0;
 
-            // Llamamos a esta función para asegurar que los event listeners se adjunten correctamente
             attachCartEventListeners();
         }
 
@@ -1260,7 +1241,6 @@
             const cartItemsContainer = document.getElementById('cart-items');
             if (!cartItemsContainer) return;
 
-            // Usamos delegación de eventos en el contenedor principal del carrito
             cartItemsContainer.addEventListener('click', (event) => {
                 const target = event.target;
                 const productName = target.dataset.name;
@@ -1284,8 +1264,7 @@
                 updateCartDisplay();
             });
         }
-        // --- FIN DEL CÓDIGO CORREGIDO ---
-        
+
         function showNotification(message) {
             const notification = document.createElement('div');
             notification.classList.add('notification');
@@ -1293,7 +1272,7 @@
             document.body.appendChild(notification);
             setTimeout(() => {
                 notification.remove();
-            }, 3000); // Duración de 3 segundos
+            }, 3000);
         }
 
         function setupSmoothScrolling() {
@@ -1303,62 +1282,91 @@
                     document.querySelector(this.getAttribute('href')).scrollIntoView({
                         behavior: 'smooth'
                     });
-                    document.querySelector('.menu-desplegable-contenido').style.display = 'none'; // Cierra el menú
+                    document.querySelector('.menu-desplegable-contenido').style.display = 'none';
                 });
             });
         }
-        
-        // --- CÓDIGO FINAL DE ESCÁNER QR ---
+
+        // --- CÓDIGO DEL ESCÁNER INTEGRADO ---
         function startQrScanner() {
             const qrScannerContainer = document.getElementById('qr-scanner-container');
-            const qrIframe = document.getElementById('qr-iframe');
-            
-            // Ocultar primero el iframe para reiniciarlo
-            qrIframe.style.display = 'none';
+            const cameraStatusElement = document.getElementById('camera-status');
 
-            // Forzar la recarga del iframe para asegurar un estado limpio
-            qrIframe.src = './qr-scanner.html?reload=' + new Date().getTime(); 
+            if (isScannerRunning) {
+                return;
+            }
 
-            // Mostrar el contenedor y el iframe después de la recarga
             qrScannerContainer.style.display = 'flex';
-            qrIframe.style.display = 'block';
+            cameraStatusElement.textContent = 'Iniciando cámara...';
+            cameraStatusElement.className = '';
 
-            // El evento 'onload' ahora es crucial para iniciar el escáner después de la recarga
-            qrIframe.onload = function() {
-                if (qrIframe.contentWindow && qrIframe.contentWindow.startScanner) {
-                    qrIframe.contentWindow.startScanner();
-                } else {
-                    console.error("No se pudo iniciar el escáner. La función startScanner no está disponible en el iframe.");
+            Quagga.init({
+                inputStream: {
+                    name: "Live",
+                    type: "LiveStream",
+                    target: document.querySelector('#interactive'),
+                    constraints: {
+                        facingMode: "environment"
+                    },
+                },
+                decoder: {
+                    readers: ["ean_reader", "code_128_reader", "upc_reader", "qr_code_reader"]
                 }
-            };
+            }, function(err) {
+                if (err) {
+                    console.error('Error al iniciar Quagga:', err);
+                    cameraStatusElement.textContent = 'Error: No se pudo acceder a la cámara.';
+                    cameraStatusElement.className = 'error';
+                    return;
+                }
+                console.log("Quagga.js iniciado correctamente.");
+                cameraStatusElement.textContent = 'Escaneando código...';
+                Quagga.start();
+                isScannerRunning = true;
+            });
+
+            Quagga.onDetected(function(result) {
+                if (isScannerRunning) {
+                    stopQrScanner();
+                    const code = result.codeResult.code;
+                    console.log("Código detectado:", code);
+
+                    const normalizedDecodedText = code.toLowerCase().trim();
+                    const product = allProducts.find(p => p['Nombre del Producto'].toLowerCase().includes(normalizedDecodedText));
+
+                    if (product) {
+                        addToCart(product, 1);
+                        showNotification(`Producto escaneado y agregado: ${product['Nombre del Producto']}`);
+                    } else {
+                        showNotification(`Producto "${decodedText}" no encontrado.`);
+                        console.warn(`No se encontró un producto para el texto: "${decodedText}"`);
+                    }
+                }
+            });
         }
 
         function stopQrScanner() {
-            const qrIframe = document.getElementById('qr-iframe');
             const qrScannerContainer = document.getElementById('qr-scanner-container');
-            
-            // Detener el escáner dentro del iframe antes de ocultarlo
-            if (qrIframe.contentWindow && qrIframe.contentWindow.stopScanner) {
-                qrIframe.contentWindow.stopScanner();
+            if (isScannerRunning) {
+                Quagga.stop();
+                isScannerRunning = false;
             }
-            
             qrScannerContainer.style.display = 'none';
-            // Dejar el iframe visible para evitar problemas de reinicio, pero el contenedor estará oculto
-            // El reinicio lo gestiona startQrScanner
         }
-        // --- FIN DEL CÓDIGO FINAL DE ESCÁNER QR ---
+
+        document.getElementById('close-qr-scanner').addEventListener('click', stopQrScanner);
+        // --- FIN DEL CÓDIGO DEL ESCÁNER INTEGRADO ---
 
         function handleButtonClick(event) {
             const buttonId = event.currentTarget.id;
             const cartPanel = document.getElementById('cart');
             const searchInput = document.getElementById('search');
             const categoryMenu = document.querySelector('.menu-desplegable-contenido');
-            
-            // Cierra todos los paneles antes de abrir uno nuevo
+
             cartPanel.style.display = 'none';
             searchInput.style.display = 'none';
             categoryMenu.style.display = 'none';
-            stopQrScanner(); // Detiene el escáner si está activo
+            stopQrScanner();
 
             switch (buttonId) {
                 case 'cart-icon':
@@ -1389,16 +1397,11 @@
             });
         });
 
-        // Event Listeners para los botones de la barra fija
         document.getElementById('cart-icon').addEventListener('click', handleButtonClick);
         document.getElementById('search-icon').addEventListener('click', handleButtonClick);
         document.getElementById('category-icon').addEventListener('click', handleButtonClick);
         document.getElementById('qr-scan-icon').addEventListener('click', handleButtonClick);
 
-        // Event Listener para el botón de cerrar del escáner
-        document.getElementById('close-qr-scanner').addEventListener('click', stopQrScanner);
-
-        // Lógica de búsqueda
         document.getElementById('search').addEventListener('input', (event) => {
             const searchTerm = normalizeText(event.target.value);
             const filteredProducts = allProducts.filter(product => {
@@ -1409,7 +1412,6 @@
             displayProducts(filteredProducts);
         });
 
-        // Lógica para enviar el pedido por WhatsApp
         document.getElementById('send-order-button').addEventListener('click', () => {
             if (cart.length === 0) {
                 alert('El carrito está vacío.');
@@ -1442,30 +1444,6 @@
             window.open(whatsappUrl, '_blank');
         });
 
-        // Lógica para recibir el mensaje del iframe
-        window.addEventListener('message', (event) => {
-            if (event.data.type === 'qr-scan') {
-                const decodedText = event.data.data;
-                
-                // Oculta el contenedor del escáner
-                stopQrScanner();
-
-                const normalizedDecodedText = decodedText.toLowerCase().trim();
-                
-                // CAMBIO CLAVE: Usa includes() para una búsqueda más flexible
-                const product = allProducts.find(p => p['Nombre del Producto'].toLowerCase().includes(normalizedDecodedText));
-
-                if (product) {
-                    addToCart(product, 1);
-                    showNotification(`Producto escaneado y agregado: ${product['Nombre del Producto']}`);
-                } else {
-                    showNotification(`Producto "${decodedText}" no encontrado.`);
-                    console.warn(`No se encontró un producto para el texto: "${decodedText}"`);
-                }
-            }
-        });
-
-        // Carga los productos al iniciar la página y actualiza el carrito
         document.addEventListener('DOMContentLoaded', () => {
             loadProducts();
             attachCartEventListeners();
