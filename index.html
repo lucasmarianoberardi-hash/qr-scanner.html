@@ -928,8 +928,6 @@
         const DISCOUNT_PERCENTAGE_20 = 0.20;
 
         let isScannerRunning = false;
-        let isProcessingScan = false;
-        let lastDetectedCode = null; // Para evitar escanear el mismo código
 
         // --- Funciones principales de la aplicación ---
 
@@ -1292,16 +1290,15 @@
         function startQrScanner() {
             const qrScannerContainer = document.getElementById('qr-scanner-container');
             const cameraStatusElement = document.getElementById('camera-status');
-
+            
             if (isScannerRunning) {
                 console.log("El escáner ya está corriendo.");
                 return;
             }
 
             qrScannerContainer.style.display = 'flex';
-            cameraStatusElement.textContent = 'Iniciando cámara...';
+            cameraStatusElement.textContent = 'Escaneando código...';
             cameraStatusElement.className = '';
-            isProcessingScan = false;
             
             Quagga.init({
                 inputStream: {
@@ -1333,41 +1330,33 @@
                     console.error('Error al iniciar Quagga:', err);
                     cameraStatusElement.textContent = 'Error: No se pudo acceder a la cámara. Por favor, revisa los permisos del navegador.';
                     cameraStatusElement.className = 'error';
-                    stopQrScanner(); // Asegurar que se detiene
+                    stopQrScanner(); 
                     return;
                 }
                 console.log("Quagga.js iniciado correctamente.");
-                cameraStatusElement.textContent = 'Escaneando código...';
                 Quagga.start();
                 isScannerRunning = true;
             });
 
             Quagga.onDetected(function(result) {
-                if (isProcessingScan) {
-                    // Ignorar detecciones si ya estamos procesando un código
-                    return;
-                }
-
                 const code = result.codeResult.code;
-                isProcessingScan = true;
+                console.log("Código detectado:", code);
 
-                // CORRECCIÓN: Se busca en la columna 'QR'
                 const product = allProducts.find(p => p['QR'] && p['QR'].trim() === code.trim());
 
                 if (product) {
                     addToCart(product, 1);
                     showNotification(`Producto escaneado: ${product['Nombre del Producto']}`);
-                    cameraStatusElement.textContent = `¡${product['Nombre del Producto']} agregado! Escaneando siguiente...`;
+                    cameraStatusElement.textContent = `¡${product['Nombre del Producto']} agregado!`;
                 } else {
                     showNotification(`Producto con código "${code}" no encontrado. Intenta de nuevo.`);
-                    cameraStatusElement.textContent = `Código "${code}" no encontrado. Escaneando siguiente...`;
+                    cameraStatusElement.textContent = `Código "${code}" no encontrado.`;
                 }
 
-                // Período de enfriamiento de 2 segundos antes de permitir un nuevo escaneo
+                // Detener el escáner para evitar lecturas repetidas
                 setTimeout(() => {
-                    isProcessingScan = false;
-                    cameraStatusElement.textContent = 'Escaneando código...';
-                }, 2000);
+                    stopQrScanner();
+                }, 2000); // Darle tiempo al usuario para ver el mensaje
             });
         }
 
@@ -1378,7 +1367,6 @@
                 isScannerRunning = false;
             }
             qrScannerContainer.style.display = 'none';
-            isProcessingScan = false;
         }
 
         document.getElementById('close-qr-scanner').addEventListener('click', stopQrScanner);
