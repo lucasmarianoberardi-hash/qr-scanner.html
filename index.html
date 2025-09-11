@@ -526,8 +526,8 @@
             position: relative;
         }
 
-        #interactive.viewport > canvas,
-        #interactive.viewport > video {
+        #interactive.viewport>canvas,
+        #interactive.viewport>video {
             display: block;
             width: 100%;
             height: auto;
@@ -1195,7 +1195,6 @@
                 } else if (item.quantity >= DISCOUNT_THRESHOLD_10) {
                     itemPrice = itemPrice * (1 - DISCOUNT_PERCENTAGE_10);
                     itemTotal = itemPrice * item.quantity;
-                    discountMessage = ` (-10%)`;
                 }
 
                 const li = document.createElement('li');
@@ -1287,7 +1286,7 @@
             });
         }
 
-        // --- CÓDIGO DEL ESCÁNER INTEGRADO ---
+        // --- CÓDIGO DEL ESCÁNER INTEGRADO Y CORREGIDO ---
         function startQrScanner() {
             const qrScannerContainer = document.getElementById('qr-scanner-container');
             const cameraStatusElement = document.getElementById('camera-status');
@@ -1332,14 +1331,16 @@
                     console.log("Código detectado:", code);
 
                     const normalizedDecodedText = code.toLowerCase().trim();
+                    
+                    // LÍNEA CORREGIDA PARA BUSCAR COINCIDENCIAS PARCIALES
                     const product = allProducts.find(p => p['Nombre del Producto'].toLowerCase().includes(normalizedDecodedText));
 
                     if (product) {
                         addToCart(product, 1);
                         showNotification(`Producto escaneado y agregado: ${product['Nombre del Producto']}`);
                     } else {
-                        showNotification(`Producto "${decodedText}" no encontrado.`);
-                        console.warn(`No se encontró un producto para el texto: "${decodedText}"`);
+                        showNotification(`Producto "${code}" no encontrado. Por favor, asegúrate de que el código coincide con el nombre del producto en la lista.`);
+                        console.warn(`No se encontró un producto para el texto: "${code}"`);
                     }
                 }
             });
@@ -1355,7 +1356,7 @@
         }
 
         document.getElementById('close-qr-scanner').addEventListener('click', stopQrScanner);
-        // --- FIN DEL CÓDIGO DEL ESCÁNER INTEGRADO ---
+        // --- FIN DEL CÓDIGO DEL ESCÁNER INTEGRADO Y CORREGIDO ---
 
         function handleButtonClick(event) {
             const buttonId = event.currentTarget.id;
