@@ -1308,17 +1308,21 @@
             });
         }
         
-        // --- CÓDIGO CORREGIDO PARA EL ESCÁNER QR ---
+        // --- CÓDIGO FINAL DE ESCÁNER QR ---
         function startQrScanner() {
             const qrScannerContainer = document.getElementById('qr-scanner-container');
             const qrIframe = document.getElementById('qr-iframe');
             
+            // Ocultar primero el iframe para reiniciarlo
+            qrIframe.style.display = 'none';
+
             // Forzar la recarga del iframe para asegurar un estado limpio
-            qrIframe.src = './qr-scanner.html'; 
+            qrIframe.src = './qr-scanner.html?reload=' + new Date().getTime(); 
+
+            // Mostrar el contenedor y el iframe después de la recarga
+            qrScannerContainer.style.display = 'flex';
             qrIframe.style.display = 'block';
 
-            qrScannerContainer.style.display = 'flex';
-            
             // El evento 'onload' ahora es crucial para iniciar el escáner después de la recarga
             qrIframe.onload = function() {
                 if (qrIframe.contentWindow && qrIframe.contentWindow.startScanner) {
@@ -1339,9 +1343,10 @@
             }
             
             qrScannerContainer.style.display = 'none';
-            qrIframe.style.display = 'none';
+            // Dejar el iframe visible para evitar problemas de reinicio, pero el contenedor estará oculto
+            // El reinicio lo gestiona startQrScanner
         }
-        // --- FIN DEL CÓDIGO CORREGIDO PARA EL ESCÁNER QR ---
+        // --- FIN DEL CÓDIGO FINAL DE ESCÁNER QR ---
 
         function handleButtonClick(event) {
             const buttonId = event.currentTarget.id;
