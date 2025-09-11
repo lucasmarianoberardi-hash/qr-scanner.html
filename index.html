@@ -508,7 +508,7 @@
         #interactive {
             width: 100%;
             height: auto;
-            max-height: 50vh; /* Ajuste para evitar que el video se haga demasiado grande */
+            max-height: 50vh;
             margin-top: 20px;
         }
 
@@ -552,6 +552,19 @@
         #camera-status.error {
             color: red;
             font-weight: bold;
+        }
+
+        /* NUEVO ESTILO PARA EL BOTÓN DE REINICIAR ESCÁNER */
+        #restart-scanner-button {
+            display: none;
+            background-color: #04ba43;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 20px;
+            font-size: 1em;
+            cursor: pointer;
+            margin-top: 20px;
         }
 
         /* Responsive Design */
@@ -881,6 +894,7 @@
             <h2>Escanear Código QR</h2>
             <div id="interactive" class="viewport"></div>
             <div id="camera-status"></div>
+            <button id="restart-scanner-button">Escanear siguiente</button>
         </div>
     </div>
 
@@ -929,6 +943,7 @@
 
         let isScannerRunning = false;
         let isProcessingScan = false;
+        let lastDetectedCode = null; // Para evitar escanear el mismo código
 
         // --- Funciones principales de la aplicación ---
 
@@ -1291,16 +1306,21 @@
         function startQrScanner() {
             const qrScannerContainer = document.getElementById('qr-scanner-container');
             const cameraStatusElement = document.getElementById('camera-status');
+            const restartButton = document.getElementById('restart-scanner-button');
 
             if (isScannerRunning) {
                 console.log("El escáner ya está corriendo.");
                 return;
             }
 
+            // Ocultar botón de reinicio al iniciar
+            restartButton.style.display = 'none';
+
             qrScannerContainer.style.display = 'flex';
             cameraStatusElement.textContent = 'Iniciando cámara...';
             cameraStatusElement.className = '';
             isProcessingScan = false;
+            lastDetectedCode = null; // Reiniciar el último código detectado
 
             Quagga.init({
                 inputStream: {
@@ -1319,7 +1339,7 @@
                     console.error('Error al iniciar Quagga:', err);
                     cameraStatusElement.textContent = 'Error: No se pudo acceder a la cámara. Por favor, revisa los permisos del navegador.';
                     cameraStatusElement.className = 'error';
-                    stopQrScanner();
+                    stopQrScanner(); // Asegurar que se detiene
                     return;
                 }
                 console.log("Quagga.js iniciado correctamente.");
@@ -1329,45 +1349,51 @@
             });
 
             Quagga.onDetected(function(result) {
-                if (!isProcessingScan) {
+                const code = result.codeResult.code;
+
+                if (!isProcessingScan && code !== lastDetectedCode) {
                     isProcessingScan = true;
+                    lastDetectedCode = code;
 
-                    const code = result.codeResult.code;
-                    console.log("Código detectado:", code);
-
-                    // Detiene el escáner para evitar múltiples detecciones.
+                    // Detener el escáner para evitar múltiples detecciones.
                     Quagga.stop();
                     isScannerRunning = false;
-
-                    // LÓGICA DE BÚSQUEDA POR CÓDIGO QR
+                    
+                    console.log("Código detectado:", code);
+                    cameraStatusElement.textContent = `Código detectado: ${code}`;
+                    
                     const product = allProducts.find(p => p.QR && p.QR.trim() === code.trim());
 
                     if (product) {
                         addToCart(product, 1);
                         showNotification(`Producto escaneado: ${product['Nombre del Producto']}`);
-                        // No cierra el modal para permitir el siguiente escaneo
-                        isProcessingScan = false;
-                        startQrScanner(); // Reinicia el escáner para el próximo código
                     } else {
                         showNotification(`Producto con código "${code}" no encontrado. Intenta de nuevo.`);
                         console.warn(`No se encontró un producto para el código: "${code}"`);
-                        isProcessingScan = false;
-                        startQrScanner(); // Reinicia el escáner para que el usuario pueda intentar de nuevo.
                     }
+
+                    // Mostrar el botón para el siguiente escaneo
+                    restartButton.style.display = 'block';
+                    isProcessingScan = false;
                 }
             });
         }
 
         function stopQrScanner() {
             const qrScannerContainer = document.getElementById('qr-scanner-container');
+            const restartButton = document.getElementById('restart-scanner-button');
             if (isScannerRunning) {
                 Quagga.stop();
                 isScannerRunning = false;
             }
             qrScannerContainer.style.display = 'none';
+            restartButton.style.display = 'none';
+            lastDetectedCode = null;
         }
 
         document.getElementById('close-qr-scanner').addEventListener('click', stopQrScanner);
+        document.getElementById('restart-scanner-button').addEventListener('click', startQrScanner);
+
         // --- FIN DEL CÓDIGO DEL ESCÁNER MEJORADO Y CORREGIDO ---
 
         function handleButtonClick(event) {
