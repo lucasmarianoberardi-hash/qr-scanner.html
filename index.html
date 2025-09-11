@@ -1375,7 +1375,7 @@
                     console.log("Código detectado:", code);
                     cameraStatusElement.textContent = `Código detectado: ${code}`;
                     
-                    // CORRECCIÓN: Se busca el código en la columna "QR"
+                    // CORRECCIÓN FINAL: Se busca en la columna 'QR'
                     const product = allProducts.find(p => p['QR'] && p['QR'].trim() === code.trim());
 
                     if (product) {
