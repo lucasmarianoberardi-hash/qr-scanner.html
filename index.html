@@ -1297,7 +1297,7 @@
             }
 
             qrScannerContainer.style.display = 'flex';
-            cameraStatusElement.textContent = 'Escaneando código...';
+            cameraStatusElement.textContent = 'Iniciando cámara...';
             cameraStatusElement.className = '';
             
             Quagga.init({
@@ -1334,29 +1334,33 @@
                     return;
                 }
                 console.log("Quagga.js iniciado correctamente.");
+                cameraStatusElement.textContent = 'Apunta al código QR para escanear.';
                 Quagga.start();
                 isScannerRunning = true;
             });
 
             Quagga.onDetected(function(result) {
-                const code = result.codeResult.code;
-                console.log("Código detectado:", code);
+                // VERIFICACIÓN CLAVE: Asegurarnos de que el resultado existe antes de usarlo
+                if (result && result.codeResult && result.codeResult.code) {
+                    const code = result.codeResult.code;
+                    console.log("Código detectado:", code);
 
-                const product = allProducts.find(p => p['QR'] && p['QR'].trim() === code.trim());
+                    const product = allProducts.find(p => p['QR'] && p['QR'].trim() === code.trim());
 
-                if (product) {
-                    addToCart(product, 1);
-                    showNotification(`Producto escaneado: ${product['Nombre del Producto']}`);
-                    cameraStatusElement.textContent = `¡${product['Nombre del Producto']} agregado!`;
-                } else {
-                    showNotification(`Producto con código "${code}" no encontrado. Intenta de nuevo.`);
-                    cameraStatusElement.textContent = `Código "${code}" no encontrado.`;
+                    if (product) {
+                        addToCart(product, 1);
+                        showNotification(`Producto escaneado: ${product['Nombre del Producto']}`);
+                        cameraStatusElement.textContent = `¡${product['Nombre del Producto']} agregado!`;
+                    } else {
+                        showNotification(`Producto con código "${code}" no encontrado. Intenta de nuevo.`);
+                        cameraStatusElement.textContent = `Código "${code}" no encontrado.`;
+                    }
+
+                    // Detener el escáner para evitar lecturas repetidas
+                    setTimeout(() => {
+                        stopQrScanner();
+                    }, 2000); // Darle tiempo al usuario para ver el mensaje
                 }
-
-                // Detener el escáner para evitar lecturas repetidas
-                setTimeout(() => {
-                    stopQrScanner();
-                }, 2000); // Darle tiempo al usuario para ver el mensaje
             });
         }
 
