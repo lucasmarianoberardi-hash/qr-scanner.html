@@ -1335,15 +1335,15 @@
                     const code = result.codeResult.code;
                     console.log("Código detectado:", code);
 
-                    const normalizedDecodedText = code.toLowerCase().trim();
-                    const product = allProducts.find(p => p['Nombre del Producto'].toLowerCase().includes(normalizedDecodedText));
+                    // LÓGICA DE BÚSQUEDA MEJORADA
+                    const product = allProducts.find(p => p.QR && p.QR.trim() === code.trim());
 
                     if (product) {
                         addToCart(product, 1);
                         showNotification(`Producto escaneado y agregado: ${product['Nombre del Producto']}`);
                     } else {
-                        showNotification(`Producto "${code}" no encontrado.`);
-                        console.warn(`No se encontró un producto para el texto: "${code}"`);
+                        showNotification(`Producto con código "${code}" no encontrado.`);
+                        console.warn(`No se encontró un producto para el código: "${code}"`);
                     }
                     isProcessingScan = false;
                 }
