@@ -701,7 +701,7 @@
             }
 
             .producto-actions button {
-                padding: 6px 10px;
+                padding: 5px 8px;
                 font-size: 0.8em;
             }
 
@@ -1446,7 +1446,9 @@
                 stopQrScanner();
 
                 const normalizedDecodedText = decodedText.toLowerCase().trim();
-                const product = allProducts.find(p => p['Nombre del Producto'].toLowerCase().trim() === normalizedDecodedText);
+                
+                // CAMBIO CLAVE: Usa includes() para una búsqueda más flexible
+                const product = allProducts.find(p => p['Nombre del Producto'].toLowerCase().includes(normalizedDecodedText));
 
                 if (product) {
                     addToCart(product, 1);
