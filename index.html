@@ -1364,7 +1364,7 @@
             Quagga.onDetected(function(result) {
                 const code = result.codeResult.code;
 
-                if (!isProcessingScan && code !== lastDetectedCode) {
+                if (!isProcessingScan && code && code !== lastDetectedCode) {
                     isProcessingScan = true;
                     lastDetectedCode = code;
 
