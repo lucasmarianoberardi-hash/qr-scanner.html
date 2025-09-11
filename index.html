@@ -7,7 +7,7 @@
     <title>Dietética Virgilio</title>
     <link rel="icon" href="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQoa73x-hEFikC_kBsIAL1pjuzpj_9fPwyZ-dI-C7f-JSLqKxiUCEnlB8KejiD5R8_aHuk&usqp=CAU" type="image/x-icon">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    
+
     <script src="https://unpkg.com/quagga@0.12.1/dist/quagga.js"></script>
     <style>
         /* Estilos generales */
@@ -505,9 +505,30 @@
             color: #fc6128;
         }
 
-        #reader {
+        #interactive {
             width: 100%;
+            height: auto;
+            max-height: 50vh; /* Ajuste para evitar que el video se haga demasiado grande */
             margin-top: 20px;
+        }
+
+        #interactive.viewport {
+            position: relative;
+        }
+
+        #interactive.viewport>canvas,
+        #interactive.viewport>video {
+            display: block;
+            width: 100%;
+            height: auto;
+        }
+
+        .drawingBuffer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
         }
 
         #close-qr-scanner {
@@ -519,28 +540,6 @@
             color: white;
             font-size: 2em;
             cursor: pointer;
-        }
-
-        #interactive.viewport {
-            width: 100%;
-            height: 100%;
-            position: relative;
-        }
-
-        #interactive.viewport>canvas,
-        #interactive.viewport>video {
-            display: block;
-            width: 100%;
-            height: auto;
-            object-fit: contain;
-        }
-
-        .drawingBuffer {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
         }
 
         #camera-status {
@@ -1294,6 +1293,7 @@
             const cameraStatusElement = document.getElementById('camera-status');
 
             if (isScannerRunning) {
+                console.log("El escáner ya está corriendo.");
                 return;
             }
 
@@ -1319,6 +1319,7 @@
                     console.error('Error al iniciar Quagga:', err);
                     cameraStatusElement.textContent = 'Error: No se pudo acceder a la cámara. Por favor, revisa los permisos del navegador.';
                     cameraStatusElement.className = 'error';
+                    stopQrScanner();
                     return;
                 }
                 console.log("Quagga.js iniciado correctamente.");
@@ -1330,22 +1331,29 @@
             Quagga.onDetected(function(result) {
                 if (!isProcessingScan) {
                     isProcessingScan = true;
-                    stopQrScanner(); // Detener el escáner inmediatamente para evitar bucles.
-                    
+
                     const code = result.codeResult.code;
                     console.log("Código detectado:", code);
 
-                    // LÓGICA DE BÚSQUEDA MEJORADA
+                    // Detiene el escáner para evitar múltiples detecciones.
+                    Quagga.stop();
+                    isScannerRunning = false;
+
+                    // LÓGICA DE BÚSQUEDA POR CÓDIGO QR
                     const product = allProducts.find(p => p.QR && p.QR.trim() === code.trim());
 
                     if (product) {
                         addToCart(product, 1);
-                        showNotification(`Producto escaneado y agregado: ${product['Nombre del Producto']}`);
+                        showNotification(`Producto escaneado: ${product['Nombre del Producto']}`);
+                        // No cierra el modal para permitir el siguiente escaneo
+                        isProcessingScan = false;
+                        startQrScanner(); // Reinicia el escáner para el próximo código
                     } else {
-                        showNotification(`Producto con código "${code}" no encontrado.`);
+                        showNotification(`Producto con código "${code}" no encontrado. Intenta de nuevo.`);
                         console.warn(`No se encontró un producto para el código: "${code}"`);
+                        isProcessingScan = false;
+                        startQrScanner(); // Reinicia el escáner para que el usuario pueda intentar de nuevo.
                     }
-                    isProcessingScan = false;
                 }
             });
         }
