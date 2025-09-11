@@ -554,19 +554,6 @@
             font-weight: bold;
         }
 
-        /* NUEVO ESTILO PARA EL BOTÓN DE REINICIAR ESCÁNER */
-        #restart-scanner-button {
-            display: none;
-            background-color: #04ba43;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            padding: 10px 20px;
-            font-size: 1em;
-            cursor: pointer;
-            margin-top: 20px;
-        }
-
         /* Responsive Design */
         @media (max-width: 768px) {
             body {
@@ -894,7 +881,6 @@
             <h2>Escanear Código QR</h2>
             <div id="interactive" class="viewport"></div>
             <div id="camera-status"></div>
-            <button id="restart-scanner-button">Escanear siguiente</button>
         </div>
     </div>
 
@@ -1306,22 +1292,17 @@
         function startQrScanner() {
             const qrScannerContainer = document.getElementById('qr-scanner-container');
             const cameraStatusElement = document.getElementById('camera-status');
-            const restartButton = document.getElementById('restart-scanner-button');
 
             if (isScannerRunning) {
                 console.log("El escáner ya está corriendo.");
                 return;
             }
 
-            // Ocultar botón de reinicio al iniciar
-            restartButton.style.display = 'none';
-
             qrScannerContainer.style.display = 'flex';
             cameraStatusElement.textContent = 'Iniciando cámara...';
             cameraStatusElement.className = '';
             isProcessingScan = false;
-            lastDetectedCode = null; // Reiniciar el último código detectado
-
+            
             Quagga.init({
                 inputStream: {
                     name: "Live",
@@ -1362,51 +1343,45 @@
             });
 
             Quagga.onDetected(function(result) {
-                const code = result.codeResult.code;
-
-                if (!isProcessingScan && code && code !== lastDetectedCode) {
-                    isProcessingScan = true;
-                    lastDetectedCode = code;
-
-                    // Detener el escáner para evitar múltiples detecciones.
-                    Quagga.stop();
-                    isScannerRunning = false;
-                    
-                    console.log("Código detectado:", code);
-                    cameraStatusElement.textContent = `Código detectado: ${code}`;
-                    
-                    // CORRECCIÓN FINAL: Se busca en la columna 'QR'
-                    const product = allProducts.find(p => p['QR'] && p['QR'].trim() === code.trim());
-
-                    if (product) {
-                        addToCart(product, 1);
-                        showNotification(`Producto escaneado: ${product['Nombre del Producto']}`);
-                    } else {
-                        showNotification(`Producto con código "${code}" no encontrado. Intenta de nuevo.`);
-                        console.warn(`No se encontró un producto para el código: "${code}"`);
-                    }
-
-                    // Mostrar el botón para el siguiente escaneo
-                    restartButton.style.display = 'block';
-                    isProcessingScan = false;
+                if (isProcessingScan) {
+                    // Ignorar detecciones si ya estamos procesando un código
+                    return;
                 }
+
+                const code = result.codeResult.code;
+                isProcessingScan = true;
+
+                // CORRECCIÓN: Se busca en la columna 'QR'
+                const product = allProducts.find(p => p['QR'] && p['QR'].trim() === code.trim());
+
+                if (product) {
+                    addToCart(product, 1);
+                    showNotification(`Producto escaneado: ${product['Nombre del Producto']}`);
+                    cameraStatusElement.textContent = `¡${product['Nombre del Producto']} agregado! Escaneando siguiente...`;
+                } else {
+                    showNotification(`Producto con código "${code}" no encontrado. Intenta de nuevo.`);
+                    cameraStatusElement.textContent = `Código "${code}" no encontrado. Escaneando siguiente...`;
+                }
+
+                // Período de enfriamiento de 2 segundos antes de permitir un nuevo escaneo
+                setTimeout(() => {
+                    isProcessingScan = false;
+                    cameraStatusElement.textContent = 'Escaneando código...';
+                }, 2000);
             });
         }
 
         function stopQrScanner() {
             const qrScannerContainer = document.getElementById('qr-scanner-container');
-            const restartButton = document.getElementById('restart-scanner-button');
             if (isScannerRunning) {
                 Quagga.stop();
                 isScannerRunning = false;
             }
             qrScannerContainer.style.display = 'none';
-            restartButton.style.display = 'none';
-            lastDetectedCode = null;
+            isProcessingScan = false;
         }
 
         document.getElementById('close-qr-scanner').addEventListener('click', stopQrScanner);
-        document.getElementById('restart-scanner-button').addEventListener('click', startQrScanner);
 
         // --- FIN DEL CÓDIGO DEL ESCÁNER MEJORADO Y CORREGIDO ---
 
@@ -1419,7 +1394,10 @@
             cartPanel.style.display = 'none';
             searchInput.style.display = 'none';
             categoryMenu.style.display = 'none';
-            stopQrScanner();
+            
+            if (buttonId !== 'qr-scan-icon') {
+                 stopQrScanner();
+            }
 
             switch (buttonId) {
                 case 'cart-icon':
