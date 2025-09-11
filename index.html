@@ -7,7 +7,8 @@
     <title>Dietética Virgilio</title>
     <link rel="icon" href="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQoa73x-hEFikC_kBsIAL1pjuzpj_9fPwyZ-dI-C7f-JSLqKxiUCEnlB8KejiD5R8_aHuk&usqp=CAU" type="image/x-icon">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/quagga/dist/quagga.min.js"></script>
+    
+    <script src="https://unpkg.com/quagga@0.12.1/dist/quagga.js"></script>
     <style>
         /* Estilos generales */
         body {
@@ -928,7 +929,8 @@
         const DISCOUNT_PERCENTAGE_20 = 0.20;
 
         let isScannerRunning = false;
-        
+        let isProcessingScan = false;
+
         // --- Funciones principales de la aplicación ---
 
         async function loadProducts() {
@@ -1286,7 +1288,7 @@
             });
         }
 
-        // --- CÓDIGO DEL ESCÁNER INTEGRADO Y CORREGIDO ---
+        // --- CÓDIGO DEL ESCÁNER MEJORADO Y CORREGIDO ---
         function startQrScanner() {
             const qrScannerContainer = document.getElementById('qr-scanner-container');
             const cameraStatusElement = document.getElementById('camera-status');
@@ -1298,6 +1300,7 @@
             qrScannerContainer.style.display = 'flex';
             cameraStatusElement.textContent = 'Iniciando cámara...';
             cameraStatusElement.className = '';
+            isProcessingScan = false;
 
             Quagga.init({
                 inputStream: {
@@ -1314,7 +1317,7 @@
             }, function(err) {
                 if (err) {
                     console.error('Error al iniciar Quagga:', err);
-                    cameraStatusElement.textContent = 'Error: No se pudo acceder a la cámara.';
+                    cameraStatusElement.textContent = 'Error: No se pudo acceder a la cámara. Por favor, revisa los permisos del navegador.';
                     cameraStatusElement.className = 'error';
                     return;
                 }
@@ -1325,23 +1328,24 @@
             });
 
             Quagga.onDetected(function(result) {
-                if (isScannerRunning) {
-                    stopQrScanner();
+                if (!isProcessingScan) {
+                    isProcessingScan = true;
+                    stopQrScanner(); // Detener el escáner inmediatamente para evitar bucles.
+                    
                     const code = result.codeResult.code;
                     console.log("Código detectado:", code);
 
                     const normalizedDecodedText = code.toLowerCase().trim();
-                    
-                    // LÍNEA CORREGIDA PARA BUSCAR COINCIDENCIAS PARCIALES
                     const product = allProducts.find(p => p['Nombre del Producto'].toLowerCase().includes(normalizedDecodedText));
 
                     if (product) {
                         addToCart(product, 1);
                         showNotification(`Producto escaneado y agregado: ${product['Nombre del Producto']}`);
                     } else {
-                        showNotification(`Producto "${code}" no encontrado. Por favor, asegúrate de que el código coincide con el nombre del producto en la lista.`);
+                        showNotification(`Producto "${code}" no encontrado.`);
                         console.warn(`No se encontró un producto para el texto: "${code}"`);
                     }
+                    isProcessingScan = false;
                 }
             });
         }
@@ -1356,7 +1360,7 @@
         }
 
         document.getElementById('close-qr-scanner').addEventListener('click', stopQrScanner);
-        // --- FIN DEL CÓDIGO DEL ESCÁNER INTEGRADO Y CORREGIDO ---
+        // --- FIN DEL CÓDIGO DEL ESCÁNER MEJORADO Y CORREGIDO ---
 
         function handleButtonClick(event) {
             const buttonId = event.currentTarget.id;
