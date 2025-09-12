@@ -926,7 +926,7 @@
         const DISCOUNT_THRESHOLD_20 = 20;
         const DISCOUNT_PERCENTAGE_20 = 0.20;
 
-        let scannerActive = false; // Nueva bandera para el estado del escáner
+        let scannerActive = false;
         let isDetectionEnabled = true;
 
         // --- Funciones principales de la aplicación ---
@@ -1348,24 +1348,11 @@
             window.open(whatsappUrl, '_blank');
         });
 
-        // --- Lógica del Escáner QR ---
+        // --- FUNCIONALIDAD DEL ESCÁNER QR ---
 
-        document.getElementById('qr-scan-icon').addEventListener('click', () => {
-            const scannerContainer = document.getElementById('qr-scanner-container');
-            const scannerContent = document.getElementById('qr-scanner-content');
-            scannerContainer.style.display = 'flex';
-            scannerContent.style.display = 'block';
-            startScanner();
-        });
-
-        document.getElementById('close-qr-scanner').addEventListener('click', () => {
-            const scannerContainer = document.getElementById('qr-scanner-container');
-            scannerContainer.style.display = 'none';
-            stopScanner();
-        });
-
+        // Función para iniciar el escáner
         function startScanner() {
-            if (scannerActive) return;
+            if (scannerActive) return; // Evita iniciar si ya está activo
             scannerActive = true; // El escáner está activo
             isDetectionEnabled = true;
 
@@ -1399,7 +1386,7 @@
             });
 
             Quagga.onDetected(function(data) {
-                if (!scannerActive) return; // FIX: No ejecutar si el escáner ya fue detenido
+                if (!scannerActive) return; // Asegura que no se ejecute si la ventana ya está cerrada
 
                 if (isDetectionEnabled) {
                     isDetectionEnabled = false;
@@ -1412,12 +1399,11 @@
                     } else {
                         showNotification(`Producto no encontrado con el código ${barcode}`);
                     }
-
+                    
                     document.getElementById('camera-status').textContent = 'Escaneado. Pausando...';
 
-                    // Se re-habilita la detección después de 2 segundos para permitir otro escaneo
                     setTimeout(() => {
-                        if (scannerActive) { // FIX: Asegurarse de que el escáner sigue activo
+                        if (scannerActive) {
                             isDetectionEnabled = true;
                             document.getElementById('camera-status').textContent = 'Cámara lista para escanear de nuevo.';
                         }
@@ -1429,34 +1415,37 @@
                 const drawingCanvas = Quagga.canvas.dom.overlay;
                 if (drawingCanvas) {
                     if (result.box) {
-                        Quagga.ImageDebug.drawPath(result.box, {
-                            x: 0,
-                            y: 1
-                        }, drawingCanvas, {
-                            color: "#00F",
-                            lineWidth: 2
-                        });
+                        Quagga.ImageDebug.drawPath(result.box, { x: 0, y: 1 }, drawingCanvas, { color: "#00F", lineWidth: 2 });
                     }
                     if (result.codeResult && result.codeResult.hasOwnProperty('box_w')) {
-                        Quagga.ImageDebug.drawPath(result.codeResult.box_w, {
-                            x: 0,
-                            y: 1
-                        }, drawingCanvas, {
-                            color: "#0F0",
-                            lineWidth: 2
-                        });
+                        Quagga.ImageDebug.drawPath(result.codeResult.box_w, { x: 0, y: 1 }, drawingCanvas, { color: "#0F0", lineWidth: 2 });
                     }
                 }
             });
         }
 
+        // Función para detener el escáner
         function stopScanner() {
-            if (!scannerActive) return; // No hacer nada si ya está inactivo
-            scannerActive = false; // Se detiene la bandera primero
+            if (!scannerActive) return;
+            scannerActive = false;
             Quagga.stop();
             document.getElementById('camera-status').style.visibility = 'hidden';
             console.log("Scanner detenido.");
         }
+
+        // Eventos para abrir y cerrar el escáner
+        document.getElementById('qr-scan-icon').addEventListener('click', () => {
+            const scannerContainer = document.getElementById('qr-scanner-container');
+            scannerContainer.style.display = 'flex';
+            startScanner();
+        });
+
+        document.getElementById('close-qr-scanner').addEventListener('click', () => {
+            const scannerContainer = document.getElementById('qr-scanner-container');
+            scannerContainer.style.display = 'none';
+            stopScanner();
+        });
+
 
         // --- Funciones de Utilidad ---
         function setupSmoothScrolling() {
