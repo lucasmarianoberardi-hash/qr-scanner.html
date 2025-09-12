@@ -7,7 +7,6 @@
     <title>Dietética Virgilio</title>
     <link rel="icon" href="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQoa73x-hEFikC_kBsIAL1pjuzpj_9fPwyZ-dI-C7f-JSLqKxiUCEnlB8KejiD5R8_aHuk&usqp=CAU" type="image/x-icon">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-
     <script src="https://unpkg.com/quagga@0.12.1/dist/quagga.js"></script>
     <style>
         /* Estilos generales */
@@ -880,7 +879,7 @@
             <button id="close-qr-scanner" aria-label="Cerrar escáner">&times;</button>
             <h2>Escanear Código QR</h2>
             <div id="interactive" class="viewport"></div>
-            <div id="camera-status"></div>
+            <div id="camera-status" style="visibility: hidden;"></div>
         </div>
     </div>
 
@@ -916,7 +915,7 @@
         const productsUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTUwKkCP-utyR4uJzAuXrCr2div8FCqsTRN57HMLuY_a0BzuThRPn_ZkfymgPoElcPg5i6UsPEuvGGN/pub?output=csv';
 
         const logoSinTaccUrl = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR5T7nDfaM_05QQOmcKUhuZoU6CnTZt0Ig9bQ&s';
-        const logoVeganoUrl = ' https://encrypted-tbn0.gstatic.com/images?q=q=tbn:ANd9GcQrWh6bS_uu0DfLFB7tEsj4aojQqHJyzH8brQ&s';
+        const logoVeganoUrl = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQrWh6bS_uu0DfLFB7tEsj4aojQqHJyzH8brQ&s';
         const logoSinAzucarUrl = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSBK_h6dMpoVwkTRMSr3C3xV46pvgD2BstPhIfEu2WMn9YoxkQM97T456Q_wGZzvZ5j&usqp=CAU';
         const logoSinSalUrl = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTHjYvblrFp9CXaSMblB_l1iDsTcTq9ridCqw&s';
 
@@ -1087,44 +1086,39 @@
                         imgSinSal.title = 'Sin Sal';
                         propiedadesContainer.appendChild(imgSinSal);
                     }
+
                     productoInfoDiv.appendChild(propiedadesContainer);
+                    productoDiv.appendChild(productoInfoDiv);
 
-                    if (productData['Descripcion']) {
-                        const descripcionContainer = document.createElement('div');
-                        descripcionContainer.classList.add('descripcion-container');
-                        const descripcionCompleta = productData['Descripcion'].trim();
-                        const palabras = descripcionCompleta.split(' ');
-                        const descripcionCorta = palabras.length > 10 ? palabras.slice(0, 10).join(' ') + '...' : descripcionCompleta;
+                    // Descripción
+                    const descripcionContainer = document.createElement('div');
+                    descripcionContainer.classList.add('descripcion-container');
+                    const descripcionCorta = document.createElement('span');
+                    descripcionCorta.classList.add('descripcion-corta');
+                    const descripcionCompleta = document.createElement('span');
+                    descripcionCompleta.classList.add('descripcion-completa');
+                    const leerMasBtn = document.createElement('button');
+                    leerMasBtn.classList.add('leer-mas-btn');
+                    leerMasBtn.textContent = '...';
 
-                        const spanCorta = document.createElement('span');
-                        spanCorta.classList.add('descripcion-corta');
-                        spanCorta.textContent = descripcionCorta;
-                        descripcionContainer.appendChild(spanCorta);
-
-                        if (palabras.length > 10) {
-                            const spanCompleta = document.createElement('span');
-                            spanCompleta.classList.add('descripcion-completa');
-                            spanCompleta.textContent = descripcionCompleta;
-                            descripcionContainer.appendChild(spanCompleta);
-
-                            const leerMasBtn = document.createElement('button');
-                            leerMasBtn.classList.add('leer-mas-btn');
-                            leerMasBtn.innerHTML = '&#9660;';
-                            leerMasBtn.onclick = function() {
-                                if (spanCompleta.style.display === 'none') {
-                                    spanCompleta.style.display = 'inline';
-                                    spanCorta.style.display = 'none';
-                                    leerMasBtn.innerHTML = '&#9650;';
-                                } else {
-                                    spanCompleta.style.display = 'none';
-                                    spanCorta.style.display = 'inline';
-                                    leerMasBtn.innerHTML = '&#9660;';
-                                }
-                            };
-                            descripcionContainer.appendChild(leerMasBtn);
-                        }
-                        productoInfoDiv.appendChild(descripcionContainer);
+                    const descText = productData.Descripción.trim();
+                    const words = descText.split(' ');
+                    if (words.length > 15) {
+                        descripcionCorta.textContent = words.slice(0, 15).join(' ') + '...';
+                        descripcionCompleta.textContent = descText;
+                        descripcionContainer.appendChild(descripcionCorta);
+                        descripcionContainer.appendChild(descripcionCompleta);
+                        descripcionContainer.appendChild(leerMasBtn);
+                        leerMasBtn.addEventListener('click', () => {
+                            descripcionCorta.style.display = 'none';
+                            descripcionCompleta.style.display = 'block';
+                            leerMasBtn.style.display = 'none';
+                        });
+                    } else {
+                        descripcionCorta.textContent = descText;
+                        descripcionContainer.appendChild(descripcionCorta);
                     }
+                    productoDiv.appendChild(descripcionContainer);
 
                     const productoActionsDiv = document.createElement('div');
                     productoActionsDiv.classList.add('producto-actions');
@@ -1133,135 +1127,27 @@
                     quantityInput.type = 'number';
                     quantityInput.min = 1;
                     quantityInput.value = 1;
-                    quantityInput.disabled = !isInStock;
+                    quantityInput.classList.add('quantity-input');
                     productoActionsDiv.appendChild(quantityInput);
 
                     const addButton = document.createElement('button');
                     addButton.textContent = 'Agregar';
-                    addButton.disabled = !isInStock;
                     if (!isInStock) {
+                        addButton.disabled = true;
                         addButton.classList.add('no-stock-button');
+                        quantityInput.disabled = true;
                     }
                     addButton.onclick = () => {
-                        const quantity = parseInt(quantityInput.value);
+                        const quantity = parseInt(quantityInput.value, 10);
                         if (quantity > 0) {
                             addToCart(productData, quantity);
                         }
                     };
                     productoActionsDiv.appendChild(addButton);
 
-                    productoDiv.appendChild(productoInfoDiv);
                     productoDiv.appendChild(productoActionsDiv);
                     categoryProductsDiv.appendChild(productoDiv);
                 });
-            });
-        }
-
-        function normalizeText(text) {
-            return text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-        }
-
-        function addToCart(product, quantity = 1) {
-            const existingItem = cart.find(item => item.name === product['Nombre del Producto']);
-            if (existingItem) {
-                existingItem.quantity += quantity;
-            } else {
-                cart.push({
-                    name: product['Nombre del Producto'],
-                    price: parseFloat(product.Precio),
-                    quantity: quantity
-                });
-            }
-            localStorage.setItem('cart', JSON.stringify(cart));
-            updateCartDisplay();
-            showNotification(`${quantity}x ${product['Nombre del Producto']} agregado al carrito.`);
-        }
-
-        function updateCartDisplay() {
-            const cartItemsContainer = document.getElementById('cart-items');
-            cartItemsContainer.innerHTML = '';
-
-            let subtotal = 0;
-            let finalTotal = 0;
-
-            cart.forEach(item => {
-                let itemPrice = item.price;
-                let itemTotal = itemPrice * item.quantity;
-                let discountMessage = '';
-
-                if (item.quantity >= DISCOUNT_THRESHOLD_20) {
-                    itemPrice = itemPrice * (1 - DISCOUNT_PERCENTAGE_20);
-                    itemTotal = itemPrice * item.quantity;
-                    discountMessage = ` (-20%)`;
-                } else if (item.quantity >= DISCOUNT_THRESHOLD_10) {
-                    itemPrice = itemPrice * (1 - DISCOUNT_PERCENTAGE_10);
-                    itemTotal = itemPrice * item.quantity;
-                }
-
-                const li = document.createElement('li');
-                li.classList.add('cart-item');
-                li.innerHTML = `
-                    <div class="cart-item-details">
-                        <p>${item.name}</p>
-                        <p>Cant: ${item.quantity} | Total: $${itemTotal.toFixed(2)}<span style="color: green;">${discountMessage}</span></p>
-                    </div>
-                    <div class="cart-item-quantity">
-                        <button class="decrease-quantity" data-name="${item.name}">-</button>
-                        <input type="number" value="${item.quantity}" min="1" data-name="${item.name}">
-                        <button class="increase-quantity" data-name="${item.name}">+</button>
-                    </div>
-                    <button class="remove-item" data-name="${item.name}">&times;</button>
-                `;
-                cartItemsContainer.appendChild(li);
-
-                subtotal += item.price * item.quantity;
-                finalTotal += itemTotal;
-            });
-
-            document.getElementById('cart-subtotal').textContent = subtotal.toFixed(2);
-            const totalDiscountAmount = subtotal - finalTotal;
-            if (totalDiscountAmount > 0) {
-                document.getElementById('cart-discount-message').textContent = `Descuento total: -$${totalDiscountAmount.toFixed(2)}`;
-            } else {
-                document.getElementById('cart-discount-message').textContent = '';
-            }
-            document.getElementById('cart-total').textContent = finalTotal.toFixed(2);
-
-            const cartCountElement = document.getElementById('cart-count');
-            const totalArticles = cart.length;
-            cartCountElement.textContent = totalArticles;
-            cartCountElement.style.display = totalArticles > 0 ? 'flex' : 'none';
-
-            document.getElementById('send-order-button').disabled = cart.length === 0;
-
-            attachCartEventListeners();
-        }
-
-        function attachCartEventListeners() {
-            const cartItemsContainer = document.getElementById('cart-items');
-            if (!cartItemsContainer) return;
-
-            cartItemsContainer.addEventListener('click', (event) => {
-                const target = event.target;
-                const productName = target.dataset.name;
-
-                if (!productName) return;
-
-                const item = cart.find(i => i.name === productName);
-                if (!item) return;
-
-                if (target.classList.contains('increase-quantity')) {
-                    item.quantity++;
-                } else if (target.classList.contains('decrease-quantity')) {
-                    if (item.quantity > 1) {
-                        item.quantity--;
-                    }
-                } else if (target.classList.contains('remove-item')) {
-                    cart = cart.filter(i => i.name !== productName);
-                }
-
-                localStorage.setItem('cart', JSON.stringify(cart));
-                updateCartDisplay();
             });
         }
 
@@ -1275,147 +1161,292 @@
             }, 3000);
         }
 
-        function setupSmoothScrolling() {
-            document.querySelectorAll('.menu-desplegable-contenido ul li a').forEach(anchor => {
-                anchor.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    document.querySelector(this.getAttribute('href')).scrollIntoView({
-                        behavior: 'smooth'
-                    });
-                    document.querySelector('.menu-desplegable-contenido').style.display = 'none';
-                });
-            });
+        function normalizeText(text) {
+            return text.toLowerCase().replace(/[^a-z0-9]/g, '');
         }
 
-        // --- CÓDIGO DEL ESCÁNER MEJORADO Y CORREGIDO ---
-        function startQrScanner() {
-            const qrScannerContainer = document.getElementById('qr-scanner-container');
-            const cameraStatusElement = document.getElementById('camera-status');
-            
-            if (isScannerRunning) {
-                console.log("El escáner ya está corriendo.");
+        function updateCartDisplay() {
+            const cartItemsList = document.getElementById('cart-items');
+            cartItemsList.innerHTML = '';
+            let subtotal = 0;
+            let totalItems = 0;
+
+            cart.forEach(item => {
+                const li = document.createElement('li');
+                li.classList.add('cart-item');
+                li.innerHTML = `
+                <div class="cart-item-details">
+                    <p>${item.name}</p>
+                    <p>Precio: $${item.price.toFixed(2)}</p>
+                    ${item.discount > 0 ? `<p class="cart-item-discount">Desc. ${item.discount * 100}%</p>` : ''}
+                </div>
+                <div class="cart-item-quantity">
+                    <button onclick="changeQuantity('${item.barcode}', -1)">-</button>
+                    <input type="number" value="${item.quantity}" min="1" data-barcode="${item.barcode}" onchange="updateQuantityInput(this)">
+                    <button onclick="changeQuantity('${item.barcode}', 1)">+</button>
+                </div>
+                <p>$${(item.price * item.quantity).toFixed(2)}</p>
+                <button onclick="removeFromCart('${item.barcode}')"><i class="fas fa-trash-alt"></i></button>
+            `;
+                cartItemsList.appendChild(li);
+                subtotal += item.price * item.quantity;
+                totalItems += item.quantity;
+            });
+
+            document.getElementById('cart-subtotal').textContent = subtotal.toFixed(2);
+            let finalTotal = subtotal;
+            let discountMessage = '';
+
+            if (totalItems >= DISCOUNT_THRESHOLD_20) {
+                finalTotal = subtotal * (1 - DISCOUNT_PERCENTAGE_20);
+                discountMessage = `¡20% de descuento por ${totalItems} productos!`;
+            } else if (totalItems >= DISCOUNT_THRESHOLD_10) {
+                finalTotal = subtotal * (1 - DISCOUNT_PERCENTAGE_10);
+                discountMessage = `¡10% de descuento por ${totalItems} productos!`;
+            }
+
+            document.getElementById('cart-total').textContent = finalTotal.toFixed(2);
+            document.getElementById('cart-discount-message').textContent = discountMessage;
+
+            document.getElementById('cart-count').textContent = totalItems;
+            document.getElementById('cart-count').style.display = totalItems > 0 ? 'flex' : 'none';
+            document.getElementById('send-order-button').disabled = totalItems === 0;
+            localStorage.setItem('cart', JSON.stringify(cart));
+        }
+
+        function addToCart(productData, quantity) {
+            const existingItem = cart.find(item => item.barcode === productData['Código de Barras']);
+            const price = parseFloat(productData.Precio);
+
+            if (existingItem) {
+                existingItem.quantity += quantity;
+            } else {
+                cart.push({
+                    barcode: productData['Código de Barras'],
+                    name: productData['Nombre del Producto'],
+                    price: price,
+                    quantity: quantity
+                });
+            }
+            showNotification(`Se agregaron ${quantity} unidades de ${productData['Nombre del Producto']}`);
+            updateCartDisplay();
+        }
+
+        function removeFromCart(barcode) {
+            cart = cart.filter(item => item.barcode !== barcode);
+            updateCartDisplay();
+            showNotification('Producto eliminado del carrito.');
+        }
+
+        function changeQuantity(barcode, change) {
+            const item = cart.find(i => i.barcode === barcode);
+            if (item) {
+                item.quantity += change;
+                if (item.quantity <= 0) {
+                    removeFromCart(barcode);
+                } else {
+                    updateCartDisplay();
+                }
+            }
+        }
+
+        function updateQuantityInput(input) {
+            const barcode = input.dataset.barcode;
+            const newQuantity = parseInt(input.value, 10);
+            if (!isNaN(newQuantity) && newQuantity > 0) {
+                const item = cart.find(i => i.barcode === barcode);
+                if (item) {
+                    item.quantity = newQuantity;
+                    updateCartDisplay();
+                }
+            } else {
+                input.value = cart.find(i => i.barcode === barcode).quantity;
+            }
+        }
+
+        // --- Event Listeners y Lógica del UI ---
+
+        document.getElementById('cart-icon').addEventListener('click', () => {
+            const cartElement = document.getElementById('cart');
+            const searchElement = document.getElementById('search');
+            cartElement.style.display = cartElement.style.display === 'block' ? 'none' : 'block';
+            searchElement.style.display = 'none';
+        });
+
+        document.getElementById('search-icon').addEventListener('click', () => {
+            const searchElement = document.getElementById('search');
+            const cartElement = document.getElementById('cart');
+            searchElement.style.display = searchElement.style.display === 'block' ? 'none' : 'block';
+            cartElement.style.display = 'none';
+            if (searchElement.style.display === 'block') {
+                searchElement.focus();
+            }
+        });
+
+        document.getElementById('search').addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            const filteredProducts = allProducts.filter(product => {
+                return (product['Nombre del Producto'] && product['Nombre del Producto'].toLowerCase().includes(searchTerm)) ||
+                    (product['Código de Barras'] && product['Código de Barras'].includes(searchTerm));
+            });
+            displayProducts(filteredProducts);
+        });
+
+        document.getElementById('send-order-button').addEventListener('click', () => {
+            if (cart.length === 0) {
+                alert('El carrito está vacío.');
                 return;
             }
 
-            qrScannerContainer.style.display = 'flex';
-            cameraStatusElement.textContent = 'Iniciando cámara...';
-            cameraStatusElement.className = '';
-            
+            const subtotal = parseFloat(document.getElementById('cart-subtotal').textContent);
+            const finalTotal = parseFloat(document.getElementById('cart-total').textContent);
+            const descuentoMessage = document.getElementById('cart-discount-message').textContent;
+
+            let message = `¡Hola! Me gustaría hacer un pedido:\n\n`;
+            message += `*Detalle del pedido:*\n`;
+            cart.forEach(item => {
+                message += `- ${item.name} (x${item.quantity}) - $${(item.price * item.quantity).toFixed(2)}\n`;
+            });
+            message += `\n*Resumen:*\n`;
+            message += `Subtotal: $${subtotal.toFixed(2)}\n`;
+            if (descuentoMessage) {
+                message += `${descuentoMessage}\n`;
+            }
+            message += `Total final: $${finalTotal.toFixed(2)}\n\n`;
+            message += `¡Gracias!`;
+
+            const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+            window.open(whatsappUrl, '_blank');
+        });
+
+        // --- Lógica del Escáner QR ---
+
+        document.getElementById('qr-scan-icon').addEventListener('click', () => {
+            const scannerContainer = document.getElementById('qr-scanner-container');
+            const scannerContent = document.getElementById('qr-scanner-content');
+            scannerContainer.style.display = 'flex';
+            scannerContent.style.display = 'block';
+            startScanner();
+        });
+
+        document.getElementById('close-qr-scanner').addEventListener('click', () => {
+            const scannerContainer = document.getElementById('qr-scanner-container');
+            scannerContainer.style.display = 'none';
+            stopScanner();
+        });
+
+        function startScanner() {
+            if (isScannerRunning) return;
+            isScannerRunning = true;
+            const cameraStatus = document.getElementById('camera-status');
+            cameraStatus.style.visibility = 'visible';
+            cameraStatus.textContent = 'Iniciando cámara...';
+
             Quagga.init({
                 inputStream: {
                     name: "Live",
                     type: "LiveStream",
                     target: document.querySelector('#interactive'),
                     constraints: {
-                        width: 640,
-                        height: 480,
-                        facingMode: "environment",
-                        // Ajuste para el enfoque automático
-                        advanced: [{
-                            zoom: 1
-                        }, {
-                            focusMode: "continuous"
-                        }]
-                    },
+                        facingMode: "environment"
+                    }
                 },
                 decoder: {
-                    readers: ["ean_reader", "code_128_reader", "upc_reader", "qr_code_reader"]
-                },
-                locator: {
-                    patchSize: "medium",
-                    halfSample: true
-                },
-                locate: true
+                    readers: ["ean_reader", "ean_8_reader", "upc_reader", "upc_e_reader"]
+                }
             }, function(err) {
                 if (err) {
-                    console.error('Error al iniciar Quagga:', err);
-                    cameraStatusElement.textContent = 'Error: No se pudo acceder a la cámara. Por favor, revisa los permisos del navegador.';
-                    cameraStatusElement.className = 'error';
-                    stopQrScanner(); 
+                    console.error("Error al iniciar Quagga:", err);
+                    cameraStatus.textContent = "Error: " + err.message;
+                    cameraStatus.classList.add('error');
+                    isScannerRunning = false;
                     return;
                 }
-                console.log("Quagga.js iniciado correctamente.");
-                cameraStatusElement.textContent = 'Apunta al código QR para escanear.';
+                cameraStatus.textContent = "Cámara iniciada. Apunta el código de barras.";
+                cameraStatus.classList.remove('error');
                 Quagga.start();
-                isScannerRunning = true;
             });
 
-            Quagga.onDetected(function(result) {
-                // VERIFICACIÓN CLAVE: Si el detector está deshabilitado, no hacemos nada
-                if (!isDetectionEnabled) {
-                    return;
-                }
+            Quagga.onDetected(function(data) {
+                if (isDetectionEnabled) {
+                    isDetectionEnabled = false;
+                    const barcode = data.codeResult.code;
+                    const foundProduct = allProducts.find(p => p['Código de Barras'] === barcode);
 
-                // VERIFICACIÓN CLAVE: Asegurarnos de que el resultado existe antes de usarlo
-                if (result && result.codeResult && result.codeResult.code) {
-                    isDetectionEnabled = false; // Deshabilitar el detector inmediatamente
-
-                    const code = result.codeResult.code;
-                    console.log("Código detectado:", code);
-
-                    const product = allProducts.find(p => p['QR'] && p['QR'].trim() === code.trim());
-
-                    if (product) {
-                        addToCart(product, 1);
-                        showNotification(`Producto escaneado: ${product['Nombre del Producto']}`);
-                        cameraStatusElement.textContent = `¡${product['Nombre del Producto']} agregado!`;
+                    if (foundProduct && parseFloat(foundProduct.Precio) > 0) {
+                        addToCart(foundProduct, 1);
+                        showNotification(`¡Producto encontrado! ${foundProduct['Nombre del Producto']}`);
+                        setTimeout(() => {
+                            isDetectionEnabled = true;
+                        }, 2000);
                     } else {
-                        showNotification(`Producto con código "${code}" no encontrado. Intenta de nuevo.`);
-                        cameraStatusElement.textContent = `Código "${code}" no encontrado.`;
+                        showNotification(`Producto no encontrado con el código ${barcode}`, 3000);
+                        setTimeout(() => {
+                            isDetectionEnabled = true;
+                        }, 2000);
                     }
+                }
+            });
 
-                    // Después de 2 segundos, volvemos a habilitar la detección
-                    setTimeout(() => {
-                        isDetectionEnabled = true;
-                        cameraStatusElement.textContent = 'Apunta al siguiente código QR.';
-                    }, 2000);
+            Quagga.onProcessed(function(result) {
+                const drawingCanvas = Quagga.canvas.dom.overlay;
+                if (drawingCanvas) {
+                    if (result.box) {
+                        Quagga.ImageDebug.drawPath(result.box, {
+                            x: 0,
+                            y: 1
+                        }, drawingCanvas, {
+                            color: "#00F",
+                            lineWidth: 2
+                        });
+                    }
+                    if (result.codeResult && result.codeResult.hasOwnProperty('box_w')) {
+                        Quagga.ImageDebug.drawPath(result.codeResult.box_w, {
+                            x: 0,
+                            y: 1
+                        }, drawingCanvas, {
+                            color: "#0F0",
+                            lineWidth: 2
+                        });
+                    }
                 }
             });
         }
 
-        function stopQrScanner() {
-            const qrScannerContainer = document.getElementById('qr-scanner-container');
-            if (isScannerRunning) {
-                Quagga.stop();
-                isScannerRunning = false;
-                isDetectionEnabled = true; // Reiniciar el estado del detector
-            }
-            qrScannerContainer.style.display = 'none';
+        function stopScanner() {
+            if (!isScannerRunning) return;
+            Quagga.stop();
+            isScannerRunning = false;
+            document.getElementById('camera-status').style.visibility = 'hidden';
+            console.log("Scanner detenido.");
         }
 
-        document.getElementById('close-qr-scanner').addEventListener('click', stopQrScanner);
-
-        // --- FIN DEL CÓDIGO DEL ESCÁNER MEJORADO Y CORREGIDO ---
-
-        function handleButtonClick(event) {
-            const buttonId = event.currentTarget.id;
-            const cartPanel = document.getElementById('cart');
-            const searchInput = document.getElementById('search');
-            const categoryMenu = document.querySelector('.menu-desplegable-contenido');
-
-            cartPanel.style.display = 'none';
-            searchInput.style.display = 'none';
-            categoryMenu.style.display = 'none';
-            
-            if (buttonId !== 'qr-scan-icon') {
-                 stopQrScanner();
-            }
-
-            switch (buttonId) {
-                case 'cart-icon':
-                    cartPanel.style.display = 'block';
-                    break;
-                case 'search-icon':
-                    searchInput.style.display = 'block';
-                    break;
-                case 'category-icon':
-                    categoryMenu.style.display = 'block';
-                    break;
-                case 'qr-scan-icon':
-                    startQrScanner();
-                    break;
-            }
+        // --- Funciones de Utilidad ---
+        function setupSmoothScrolling() {
+            document.querySelectorAll('.menu-desplegable-contenido a').forEach(anchor => {
+                anchor.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    document.getElementById('category-icon').click();
+                    const targetId = this.getAttribute('href');
+                    const targetElement = document.querySelector(targetId);
+                    if (targetElement) {
+                        window.scrollTo({
+                            top: targetElement.offsetTop - 80,
+                            behavior: 'smooth'
+                        });
+                    }
+                });
+            });
         }
+
+        window.addEventListener('scroll', () => {
+            const scrollTopButton = document.getElementById('scroll-to-top-footer');
+            if (window.scrollY > 200) {
+                scrollTopButton.style.display = 'flex';
+            } else {
+                scrollTopButton.style.display = 'none';
+            }
+        });
 
         document.getElementById('scroll-top-icon').addEventListener('click', () => {
             window.scrollTo({
@@ -1430,57 +1461,12 @@
             });
         });
 
-        document.getElementById('cart-icon').addEventListener('click', handleButtonClick);
-        document.getElementById('search-icon').addEventListener('click', handleButtonClick);
-        document.getElementById('category-icon').addEventListener('click', handleButtonClick);
-        document.getElementById('qr-scan-icon').addEventListener('click', handleButtonClick);
-
-        document.getElementById('search').addEventListener('input', (event) => {
-            const searchTerm = normalizeText(event.target.value);
-            const filteredProducts = allProducts.filter(product => {
-                const productName = normalizeText(product['Nombre del Producto']);
-                const productCategory = normalizeText(product.Categoría);
-                return productName.includes(searchTerm) || productCategory.includes(searchTerm);
-            });
-            displayProducts(filteredProducts);
+        document.getElementById('category-icon').addEventListener('click', () => {
+            const menuContent = document.querySelector('.menu-desplegable-contenido');
+            menuContent.style.display = menuContent.style.display === 'block' ? 'none' : 'block';
         });
 
-        document.getElementById('send-order-button').addEventListener('click', () => {
-            if (cart.length === 0) {
-                alert('El carrito está vacío.');
-                return;
-            }
-
-            let message = 'Hola, me gustaría hacer un pedido:\n\n';
-            let finalTotal = 0;
-
-            cart.forEach(item => {
-                let itemPrice = item.price;
-                let itemTotal = item.price * item.quantity;
-
-                if (item.quantity >= DISCOUNT_THRESHOLD_20) {
-                    itemPrice = itemPrice * (1 - DISCOUNT_PERCENTAGE_20);
-                    itemTotal = itemPrice * item.quantity;
-                } else if (item.quantity >= DISCOUNT_THRESHOLD_10) {
-                    itemPrice = itemPrice * (1 - DISCOUNT_PERCENTAGE_10);
-                    itemTotal = itemPrice * item.quantity;
-                }
-
-                message += `* ${item.name} - Cantidad: ${item.quantity} - Subtotal: $${itemTotal.toFixed(2)}\n`;
-                finalTotal += itemTotal;
-            });
-
-            message += `\n*TOTAL: $${finalTotal.toFixed(2)}*\n\n`;
-            message += '¡Gracias!';
-
-            const whatsappUrl = `https://wa.me/XXXXXXXXXX?text=${encodeURIComponent(message)}`;
-            window.open(whatsappUrl, '_blank');
-        });
-
-        document.addEventListener('DOMContentLoaded', () => {
-            loadProducts();
-            attachCartEventListeners();
-        });
+        loadProducts();
     </script>
 </body>
 
