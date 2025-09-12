@@ -926,8 +926,9 @@
         const DISCOUNT_THRESHOLD_20 = 20;
         const DISCOUNT_PERCENTAGE_20 = 0.20;
 
-        let isScannerRunning = false;
-        
+        let scannerActive = false; // Nueva bandera para el estado del escáner
+        let isDetectionEnabled = true;
+
         // --- Funciones principales de la aplicación ---
 
         async function loadProducts() {
@@ -1173,6 +1174,7 @@
             cart.forEach(item => {
                 const li = document.createElement('li');
                 li.classList.add('cart-item');
+                li.dataset.barcode = item.barcode; // Agregamos el barcode al elemento li
                 li.innerHTML = `
                 <div class="cart-item-details">
                     <p>${item.name}</p>
@@ -1180,17 +1182,19 @@
                     ${item.discount > 0 ? `<p class="cart-item-discount">Desc. ${item.discount * 100}%</p>` : ''}
                 </div>
                 <div class="cart-item-quantity">
-                    <button onclick="changeQuantity('${item.barcode}', -1)">-</button>
-                    <input type="number" value="${item.quantity}" min="1" data-barcode="${item.barcode}" onchange="updateQuantityInput(this)">
-                    <button onclick="changeQuantity('${item.barcode}', 1)">+</button>
+                    <button class="quantity-button" data-barcode="${item.barcode}" data-change="-1">-</button>
+                    <input type="number" value="${item.quantity}" min="1" class="quantity-input-cart" data-barcode="${item.barcode}">
+                    <button class="quantity-button" data-barcode="${item.barcode}" data-change="1">+</button>
                 </div>
                 <p>$${(item.price * item.quantity).toFixed(2)}</p>
-                <button onclick="removeFromCart('${item.barcode}')"><i class="fas fa-trash-alt"></i></button>
+                <button class="remove-from-cart" data-barcode="${item.barcode}"><i class="fas fa-trash-alt"></i></button>
             `;
                 cartItemsList.appendChild(li);
                 subtotal += item.price * item.quantity;
                 totalItems += item.quantity;
             });
+            // Re-adjuntamos los event listeners después de reconstruir el DOM
+            setupCartEventListeners();
 
             document.getElementById('cart-subtotal').textContent = subtotal.toFixed(2);
             let finalTotal = subtotal;
@@ -1231,12 +1235,14 @@
             updateCartDisplay();
         }
 
+        // Función corregida: Ahora se pasa el barcode, no un elemento del DOM
         function removeFromCart(barcode) {
             cart = cart.filter(item => item.barcode !== barcode);
             updateCartDisplay();
             showNotification('Producto eliminado del carrito.');
         }
 
+        // Función corregida: Ahora se usa el barcode
         function changeQuantity(barcode, change) {
             const item = cart.find(i => i.barcode === barcode);
             if (item) {
@@ -1249,18 +1255,42 @@
             }
         }
 
-        function updateQuantityInput(input) {
-            const barcode = input.dataset.barcode;
-            const newQuantity = parseInt(input.value, 10);
-            if (!isNaN(newQuantity) && newQuantity > 0) {
-                const item = cart.find(i => i.barcode === barcode);
-                if (item) {
-                    item.quantity = newQuantity;
-                    updateCartDisplay();
-                }
-            } else {
-                input.value = cart.find(i => i.barcode === barcode).quantity;
-            }
+        // Nueva función para manejar los eventos de los botones del carrito
+        function setupCartEventListeners() {
+            // Evento para los botones de cantidad (+/-)
+            document.querySelectorAll('.quantity-button').forEach(button => {
+                button.addEventListener('click', () => {
+                    const barcode = button.dataset.barcode;
+                    const change = parseInt(button.dataset.change);
+                    changeQuantity(barcode, change);
+                });
+            });
+
+            // Evento para los inputs de cantidad
+            document.querySelectorAll('.quantity-input-cart').forEach(input => {
+                input.addEventListener('change', () => {
+                    const barcode = input.dataset.barcode;
+                    const newQuantity = parseInt(input.value, 10);
+                    if (!isNaN(newQuantity) && newQuantity > 0) {
+                        const item = cart.find(i => i.barcode === barcode);
+                        if (item) {
+                            item.quantity = newQuantity;
+                            updateCartDisplay();
+                        }
+                    } else {
+                        // Si el valor no es válido, restaurar el valor anterior
+                        input.value = cart.find(i => i.barcode === barcode).quantity;
+                    }
+                });
+            });
+
+            // Evento para los botones de eliminar
+            document.querySelectorAll('.remove-from-cart').forEach(button => {
+                button.addEventListener('click', () => {
+                    const barcode = button.dataset.barcode;
+                    removeFromCart(barcode);
+                });
+            });
         }
 
         // --- Event Listeners y Lógica del UI ---
@@ -1335,8 +1365,9 @@
         });
 
         function startScanner() {
-            if (isScannerRunning) return;
-            isScannerRunning = true;
+            if (scannerActive) return;
+            scannerActive = true; // El escáner está activo
+            isDetectionEnabled = true;
 
             const cameraStatus = document.getElementById('camera-status');
             cameraStatus.style.visibility = 'visible';
@@ -1359,7 +1390,7 @@
                     console.error("Error al iniciar Quagga:", err);
                     cameraStatus.textContent = "Error: " + err.message;
                     cameraStatus.classList.add('error');
-                    isScannerRunning = false;
+                    scannerActive = false;
                     return;
                 }
                 cameraStatus.textContent = "Cámara iniciada. Apunta el código de barras.";
@@ -1368,18 +1399,29 @@
             });
 
             Quagga.onDetected(function(data) {
-                const barcode = data.codeResult.code;
-                const foundProduct = allProducts.find(p => p['Código de Barras'] === barcode);
+                if (!scannerActive) return; // FIX: No ejecutar si el escáner ya fue detenido
 
-                if (foundProduct && parseFloat(foundProduct.Precio) > 0) {
-                    addToCart(foundProduct, 1);
-                    showNotification(`¡Producto encontrado! ${foundProduct['Nombre del Producto']}`);
-                    // Nueva lógica: cerrar el escáner después de una detección exitosa
+                if (isDetectionEnabled) {
+                    isDetectionEnabled = false;
+                    const barcode = data.codeResult.code;
+                    const foundProduct = allProducts.find(p => p['Código de Barras'] === barcode);
+
+                    if (foundProduct && parseFloat(foundProduct.Precio) > 0) {
+                        addToCart(foundProduct, 1);
+                        showNotification(`¡Producto encontrado! ${foundProduct['Nombre del Producto']}`);
+                    } else {
+                        showNotification(`Producto no encontrado con el código ${barcode}`);
+                    }
+
+                    document.getElementById('camera-status').textContent = 'Escaneado. Pausando...';
+
+                    // Se re-habilita la detección después de 2 segundos para permitir otro escaneo
                     setTimeout(() => {
-                        stopScanner();
-                    }, 500); // 0.5 segundos de retraso para que el usuario vea la notificación.
-                } else {
-                    showNotification(`Producto no encontrado con el código ${barcode}`);
+                        if (scannerActive) { // FIX: Asegurarse de que el escáner sigue activo
+                            isDetectionEnabled = true;
+                            document.getElementById('camera-status').textContent = 'Cámara lista para escanear de nuevo.';
+                        }
+                    }, 2000);
                 }
             });
 
@@ -1409,11 +1451,10 @@
         }
 
         function stopScanner() {
-            if (!isScannerRunning) return;
+            if (!scannerActive) return; // No hacer nada si ya está inactivo
+            scannerActive = false; // Se detiene la bandera primero
             Quagga.stop();
-            isScannerRunning = false;
             document.getElementById('camera-status').style.visibility = 'hidden';
-            document.getElementById('qr-scanner-container').style.display = 'none';
             console.log("Scanner detenido.");
         }
 
