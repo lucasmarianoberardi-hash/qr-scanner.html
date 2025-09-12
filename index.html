@@ -1394,15 +1394,13 @@
                     showNotification(`Producto no encontrado: ${barcode}`);
                 }
                 
-                document.getElementById('camera-status').textContent = 'Escaneado. Espere un momento...';
-
-                // Re-habilita la detección después de una breve pausa
+                // Simplemente re-habilita la detección después de una pausa muy breve
                 setTimeout(() => {
                     if (scannerActive) {
                         isDetectionEnabled = true;
                         document.getElementById('camera-status').textContent = 'Cámara lista para escanear de nuevo.';
                     }
-                }, 1500); // Pausa de 1.5 segundos
+                }, 500); // Pausa de solo 0.5 segundos para evitar escaneos dobles
             });
             
             // Evento para dibujar el recuadro de detección
