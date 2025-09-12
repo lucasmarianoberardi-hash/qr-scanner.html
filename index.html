@@ -927,8 +927,7 @@
         const DISCOUNT_PERCENTAGE_20 = 0.20;
 
         let isScannerRunning = false;
-        let isDetectionEnabled = true;
-
+        
         // --- Funciones principales de la aplicación ---
 
         async function loadProducts() {
@@ -1338,7 +1337,6 @@
         function startScanner() {
             if (isScannerRunning) return;
             isScannerRunning = true;
-            isDetectionEnabled = true; // FIX: Se reinicia la detección al abrir el escáner.
 
             const cameraStatus = document.getElementById('camera-status');
             cameraStatus.style.visibility = 'visible';
@@ -1370,23 +1368,18 @@
             });
 
             Quagga.onDetected(function(data) {
-                if (isDetectionEnabled) {
-                    isDetectionEnabled = false;
-                    const barcode = data.codeResult.code;
-                    const foundProduct = allProducts.find(p => p['Código de Barras'] === barcode);
+                const barcode = data.codeResult.code;
+                const foundProduct = allProducts.find(p => p['Código de Barras'] === barcode);
 
-                    if (foundProduct && parseFloat(foundProduct.Precio) > 0) {
-                        addToCart(foundProduct, 1);
-                        showNotification(`¡Producto encontrado! ${foundProduct['Nombre del Producto']}`);
-                        setTimeout(() => {
-                            isDetectionEnabled = true;
-                        }, 2000);
-                    } else {
-                        showNotification(`Producto no encontrado con el código ${barcode}`, 3000);
-                        setTimeout(() => {
-                            isDetectionEnabled = true;
-                        }, 2000);
-                    }
+                if (foundProduct && parseFloat(foundProduct.Precio) > 0) {
+                    addToCart(foundProduct, 1);
+                    showNotification(`¡Producto encontrado! ${foundProduct['Nombre del Producto']}`);
+                    // Nueva lógica: cerrar el escáner después de una detección exitosa
+                    setTimeout(() => {
+                        stopScanner();
+                    }, 500); // 0.5 segundos de retraso para que el usuario vea la notificación.
+                } else {
+                    showNotification(`Producto no encontrado con el código ${barcode}`);
                 }
             });
 
@@ -1419,8 +1412,8 @@
             if (!isScannerRunning) return;
             Quagga.stop();
             isScannerRunning = false;
-            isDetectionEnabled = false; // FIX: Se desactiva la detección al cerrar el escáner.
             document.getElementById('camera-status').style.visibility = 'hidden';
+            document.getElementById('qr-scanner-container').style.display = 'none';
             console.log("Scanner detenido.");
         }
 
