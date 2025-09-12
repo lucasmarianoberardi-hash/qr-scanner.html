@@ -1174,7 +1174,7 @@
             cart.forEach(item => {
                 const li = document.createElement('li');
                 li.classList.add('cart-item');
-                li.dataset.barcode = item.barcode; // Agregamos el barcode al elemento li
+                li.dataset.barcode = item.barcode;
                 li.innerHTML = `
                 <div class="cart-item-details">
                     <p>${item.name}</p>
@@ -1193,7 +1193,6 @@
                 subtotal += item.price * item.quantity;
                 totalItems += item.quantity;
             });
-            // Re-adjuntamos los event listeners después de reconstruir el DOM
             setupCartEventListeners();
 
             document.getElementById('cart-subtotal').textContent = subtotal.toFixed(2);
@@ -1235,14 +1234,12 @@
             updateCartDisplay();
         }
 
-        // Función corregida: Ahora se pasa el barcode, no un elemento del DOM
         function removeFromCart(barcode) {
             cart = cart.filter(item => item.barcode !== barcode);
             updateCartDisplay();
             showNotification('Producto eliminado del carrito.');
         }
 
-        // Función corregida: Ahora se usa el barcode
         function changeQuantity(barcode, change) {
             const item = cart.find(i => i.barcode === barcode);
             if (item) {
@@ -1255,9 +1252,7 @@
             }
         }
 
-        // Nueva función para manejar los eventos de los botones del carrito
         function setupCartEventListeners() {
-            // Evento para los botones de cantidad (+/-)
             document.querySelectorAll('.quantity-button').forEach(button => {
                 button.addEventListener('click', () => {
                     const barcode = button.dataset.barcode;
@@ -1266,7 +1261,6 @@
                 });
             });
 
-            // Evento para los inputs de cantidad
             document.querySelectorAll('.quantity-input-cart').forEach(input => {
                 input.addEventListener('change', () => {
                     const barcode = input.dataset.barcode;
@@ -1278,13 +1272,11 @@
                             updateCartDisplay();
                         }
                     } else {
-                        // Si el valor no es válido, restaurar el valor anterior
                         input.value = cart.find(i => i.barcode === barcode).quantity;
                     }
                 });
             });
 
-            // Evento para los botones de eliminar
             document.querySelectorAll('.remove-from-cart').forEach(button => {
                 button.addEventListener('click', () => {
                     const barcode = button.dataset.barcode;
@@ -1352,8 +1344,8 @@
 
         // Función para iniciar el escáner
         function startScanner() {
-            if (scannerActive) return; // Evita iniciar si ya está activo
-            scannerActive = true; // El escáner está activo
+            if (scannerActive) return;
+            scannerActive = true;
             isDetectionEnabled = true;
 
             const cameraStatus = document.getElementById('camera-status');
@@ -1385,41 +1377,39 @@
                 Quagga.start();
             });
 
+            // Evento que se dispara al detectar un código de barras
             Quagga.onDetected(function(data) {
-                if (!scannerActive) return; // Asegura que no se ejecute si la ventana ya está cerrada
-
-                if (isDetectionEnabled) {
-                    isDetectionEnabled = false;
-                    const barcode = data.codeResult.code;
-                    const foundProduct = allProducts.find(p => p['Código de Barras'] === barcode);
-
-                    if (foundProduct && parseFloat(foundProduct.Precio) > 0) {
-                        addToCart(foundProduct, 1);
-                        showNotification(`¡Producto encontrado! ${foundProduct['Nombre del Producto']}`);
-                    } else {
-                        showNotification(`Producto no encontrado con el código ${barcode}`);
-                    }
-                    
-                    document.getElementById('camera-status').textContent = 'Escaneado. Pausando...';
-
-                    setTimeout(() => {
-                        if (scannerActive) {
-                            isDetectionEnabled = true;
-                            document.getElementById('camera-status').textContent = 'Cámara lista para escanear de nuevo.';
-                        }
-                    }, 2000);
+                if (!isDetectionEnabled || !scannerActive) {
+                    return;
                 }
-            });
 
+                isDetectionEnabled = false; // Desactiva la detección temporalmente
+                const barcode = data.codeResult.code;
+                const foundProduct = allProducts.find(p => p['Código de Barras'] === barcode);
+                
+                if (foundProduct && parseFloat(foundProduct.Precio) > 0) {
+                    addToCart(foundProduct, 1);
+                    showNotification(`¡Producto encontrado! ${foundProduct['Nombre del Producto']}`);
+                } else {
+                    showNotification(`Producto no encontrado: ${barcode}`);
+                }
+                
+                document.getElementById('camera-status').textContent = 'Escaneado. Espere un momento...';
+
+                // Re-habilita la detección después de una breve pausa
+                setTimeout(() => {
+                    if (scannerActive) {
+                        isDetectionEnabled = true;
+                        document.getElementById('camera-status').textContent = 'Cámara lista para escanear de nuevo.';
+                    }
+                }, 1500); // Pausa de 1.5 segundos
+            });
+            
+            // Evento para dibujar el recuadro de detección
             Quagga.onProcessed(function(result) {
                 const drawingCanvas = Quagga.canvas.dom.overlay;
                 if (drawingCanvas) {
-                    if (result.box) {
-                        Quagga.ImageDebug.drawPath(result.box, { x: 0, y: 1 }, drawingCanvas, { color: "#00F", lineWidth: 2 });
-                    }
-                    if (result.codeResult && result.codeResult.hasOwnProperty('box_w')) {
-                        Quagga.ImageDebug.drawPath(result.codeResult.box_w, { x: 0, y: 1 }, drawingCanvas, { color: "#0F0", lineWidth: 2 });
-                    }
+                    Quagga.ImageDebug.drawPath(result.box, { x: 0, y: 1 }, drawingCanvas, { color: "red", lineWidth: 2 });
                 }
             });
         }
