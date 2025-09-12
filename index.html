@@ -1338,6 +1338,8 @@
         function startScanner() {
             if (isScannerRunning) return;
             isScannerRunning = true;
+            isDetectionEnabled = true; // FIX: Se reinicia la detección al abrir el escáner.
+
             const cameraStatus = document.getElementById('camera-status');
             cameraStatus.style.visibility = 'visible';
             cameraStatus.textContent = 'Iniciando cámara...';
@@ -1417,6 +1419,7 @@
             if (!isScannerRunning) return;
             Quagga.stop();
             isScannerRunning = false;
+            isDetectionEnabled = false; // FIX: Se desactiva la detección al cerrar el escáner.
             document.getElementById('camera-status').style.visibility = 'hidden';
             console.log("Scanner detenido.");
         }
