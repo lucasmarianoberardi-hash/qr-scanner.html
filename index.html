@@ -491,13 +491,12 @@
             align-items: center;
         }
 
-        /* FIX: NUEVO ESTILO RESPONSIVO PARA EL CONTENEDOR DEL ESCÁNER */
         #qr-scanner-content {
             background-color: #f29a5e;
             padding: 20px;
             border-radius: 10px;
-            width: 90%; /* Ajustado para móviles */
-            max-width: 400px; /* Mantiene un tamaño máximo para desktop */
+            width: 90%;
+            max-width: 400px;
             text-align: center;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
             position: relative;
@@ -512,16 +511,28 @@
             width: 100%;
             margin-top: 20px;
         }
-
+        
+        /* FIX: NUEVO ESTILO PARA EL BOTÓN DE CERRAR */
         #close-qr-scanner {
             position: absolute;
-            top: 10px;
-            right: 10px;
-            background: none;
-            border: none;
+            left: 50%;
+            transform: translateX(-50%);
+            bottom: 20px;
+            background-color: #d9534f;
             color: white;
-            font-size: 2em;
+            border: none;
+            padding: 10px 20px;
+            font-size: 1.2em;
+            border-radius: 5px;
             cursor: pointer;
+            width: 80%;
+            max-width: 200px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.3s ease;
+        }
+
+        #close-qr-scanner:hover {
+            background-color: #c9302c;
         }
 
         /* Responsive Design */
@@ -843,10 +854,10 @@
 
     <div id="qr-scanner-container">
         <div id="qr-scanner-content">
-            <button id="close-qr-scanner" aria-label="Cerrar escáner">&times;</button>
             <h2>Escanear Código QR</h2>
             <div id="reader"></div>
         </div>
+        <button id="close-qr-scanner" aria-label="Cerrar escáner">STOP SCANNING</button>
     </div>
 
 
@@ -1210,6 +1221,9 @@
                         input.value = newQuantity;
                         updateCartQuantity(productName, newQuantity);
                     } else {
+                        removeFromCart(productName);
+                    }
+                    if (newQuantity <= 0) {
                         removeFromCart(productName);
                     }
                 });
