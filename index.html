@@ -124,7 +124,7 @@
         }
 
         .menu-desplegable-contenido ul li a:hover {
-            background-color: ##f5e5d5;
+            background-color: #f5e5d5;
         }
 
         /* Campo de búsqueda */
@@ -250,7 +250,7 @@
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            font-size: 1.6 em;
+            font-size: 1.6em;
             width: 100%;
             margin-top: 20px;
             transition: background-color 0.3s ease;
@@ -667,13 +667,9 @@
             }
 
             .logo-propiedad {
-                /* ANTES: height: 10px; max-height: 10px; max-width: 10px; */
                 height: 18px;
-                /* Aumentado */
                 max-height: 18px;
-                /* Aumentado */
                 max-width: 18px;
-                /* Aumentado */
             }
 
             .descripcion-corta,
@@ -788,13 +784,9 @@
             }
 
             .logo-propiedad {
-                /* ANTES: height: 8px; max-height: 8px; max-width: 8px; */
                 height: 15px;
-                /* Aumentado */
                 max-height: 15px;
-                /* Aumentado */
                 max-width: 15px;
-                /* Aumentado */
             }
 
             .descripcion-corta,
@@ -1354,7 +1346,7 @@
             });
         });
 
-        // --- LÓGICA DEL ESCÁNER QR (ACTUALIZADA) ---
+        // --- LÓGICA DEL ESCÁNER QR (ACTUALIZADA Y RESPONSIVA) ---
         const qrScanIcon = document.getElementById('qr-scan-icon');
         const qrScannerContainer = document.getElementById('qr-scanner-container');
         const closeQrScannerBtn = document.getElementById('close-qr-scanner');
@@ -1371,7 +1363,6 @@
             } else {
                 showNotification('❌ Producto no encontrado. Código: ' + qrCodeValue);
             }
-            // NO SE DETIENE EL ESCÁNER AQUÍ. Se mantiene visible y activo.
         }
 
         function onScanFailure(error) {
@@ -1379,14 +1370,16 @@
         }
 
         function closeQrScanner() {
-            if (html5QrcodeScanner) {
+            if (html5QrcodeScanner && html5QrcodeScanner.getState() !== Html5Qrcode.Html5QrcodeScannerState.NOT_STARTED) {
                 html5QrcodeScanner.stop().then(() => {
                     console.log("Escáner detenido.");
+                    qrScannerContainer.style.display = 'none';
                 }).catch(err => {
                     console.error("Error al detener el escáner:", err);
                 });
+            } else {
+                qrScannerContainer.style.display = 'none';
             }
-            qrScannerContainer.style.display = 'none';
         }
 
         qrScanIcon.addEventListener('click', () => {
@@ -1407,9 +1400,13 @@
                 html5QrcodeScanner = new Html5QrcodeScanner(
                     "reader", {
                         fps: 10,
-                        qrbox: {
-                            width: 250,
-                            height: 250
+                        qrbox: (viewfinderWidth, viewfinderHeight) => {
+                            const minEdgePercentage = 0.7;
+                            const minEdgeSize = Math.min(viewfinderWidth, viewfinderHeight);
+                            return {
+                                width: minEdgeSize * minEdgePercentage,
+                                height: minEdgeSize * minEdgePercentage
+                            };
                         },
                         rememberLastUsedCamera: true
                     },
