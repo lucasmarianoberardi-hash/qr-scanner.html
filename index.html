@@ -1357,8 +1357,7 @@
         function onScanSuccess(decodedText) {
             console.log(`✅ Código QR detectado: ${decodedText}`);
 
-            // Detiene el escáner inmediatamente para evitar múltiples lecturas
-            stopQrScanner();
+            stopQrScanner(); // Detenemos el escáner
 
             const matchingProduct = allProducts.find(p => p.QR === decodedText);
 
@@ -1367,6 +1366,13 @@
             } else {
                 showNotification('❌ Producto no encontrado. Código: ' + decodedText);
             }
+
+            // Después de un breve retraso, reiniciamos el escáner si el contenedor sigue visible
+            setTimeout(() => {
+                if (qrScannerContainer.style.display === 'flex') {
+                    startQrScanner();
+                }
+            }, 1000); // 1 segundo de retraso para que el usuario vea la notificación
         }
 
         function onScanFailure(error) {
@@ -1407,20 +1413,13 @@
             if (html5QrcodeScanner && isScannerRunning) {
                 html5QrcodeScanner.clear().then(() => {
                     console.log("Escáner detenido y limpiado.");
-                    qrScannerContainer.style.display = 'none';
                     isScannerRunning = false;
-                    html5QrcodeScanner = null; // Reinicia la variable
                 }).catch(err => {
                     console.error("Error al detener el escáner:", err);
-                    qrScannerContainer.style.display = 'none';
                     isScannerRunning = false;
-                    html5QrcodeScanner = null; // Reinicia la variable
                 });
-            } else {
-                qrScannerContainer.style.display = 'none';
-                isScannerRunning = false;
-                html5QrcodeScanner = null; // Asegúrate de que la variable esté limpia
             }
+            qrScannerContainer.style.display = 'none'; // Siempre ocultamos la pantalla del escáner al detenerlo
         }
 
         qrScanIcon.addEventListener('click', startQrScanner);
