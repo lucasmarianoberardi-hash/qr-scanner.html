@@ -1357,7 +1357,8 @@
         function onScanSuccess(decodedText) {
             console.log(`✅ Código QR detectado: ${decodedText}`);
 
-            stopQrScanner(); // Detenemos el escáner
+            // Primero, detenemos el escáner para procesar el resultado
+            stopQrScanner();
 
             const matchingProduct = allProducts.find(p => p.QR === decodedText);
 
@@ -1367,12 +1368,12 @@
                 showNotification('❌ Producto no encontrado. Código: ' + decodedText);
             }
 
-            // Después de un breve retraso, reiniciamos el escáner si el contenedor sigue visible
+            // Después de un breve retraso, reiniciamos el escáner para que la cámara quede lista para el próximo QR
             setTimeout(() => {
                 if (qrScannerContainer.style.display === 'flex') {
                     startQrScanner();
                 }
-            }, 1000); // 1 segundo de retraso para que el usuario vea la notificación
+            }, 1000); // 1 segundo de retraso para que el usuario pueda ver la notificación
         }
 
         function onScanFailure(error) {
@@ -1380,9 +1381,9 @@
         }
 
         function startQrScanner() {
-            // Detiene el escáner actual si está en ejecución antes de iniciar uno nuevo
+            // Si ya hay un escáner en ejecución, no hacemos nada para evitar duplicados
             if (isScannerRunning) {
-                stopQrScanner();
+                return;
             }
 
             // Oculta otras ventanas antes de mostrar el escáner
@@ -1419,7 +1420,10 @@
                     isScannerRunning = false;
                 });
             }
-            qrScannerContainer.style.display = 'none'; // Siempre ocultamos la pantalla del escáner al detenerlo
+            // Ocultamos la pantalla del escáner solo si se llama desde el botón de cerrar
+            if (event.target.id === 'close-qr-scanner') {
+                qrScannerContainer.style.display = 'none';
+            }
         }
 
         qrScanIcon.addEventListener('click', startQrScanner);
