@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 
@@ -513,40 +514,38 @@
         }
 
         /* FIX: NUEVO ESTILO PARA EL BOTÓN DE CERRAR */
-       
-            #close-qr-scanner {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  background-color: #d9534f;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  font-size: 1.2em;
-  border-radius: 5px;
-  cursor: pointer;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-  transition: background-color 0.3s ease;
-}
+        #close-qr-scanner {
+            position: absolute;
+            left: 20px;
+            right: auto;
+            transform: none; /* Elimina el centrado horizontal */
+            bottom: 20px;
+            background-color: #d9534f;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 1.2em;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 80%;
+            max-width: 200px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.3s ease;
+        }
 
         #close-qr-scanner:hover {
             background-color: #c9302c;
         }
 
-       @media (max-width: 768px) {
-  #qr-scanner-content {
-    width: 95%;
-  }
-  #close-qr-scanner {
-    width: 35px;
-    height: 35px;
-  }
-}
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            body {
+                padding-top: 55px;
+            }
+
+            .fixed-icons {
+                padding: 5px 10px;
+            }
 
             .fixed-icons button {
                 width: 40px;
