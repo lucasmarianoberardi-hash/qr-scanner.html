@@ -516,7 +516,7 @@
             position: absolute;
             left: 20px;
             right: auto;
-            transform: none; /* Elimina el centrado horizontal */
+            transform: none;
             bottom: 20px;
             background-color: #d9534f;
             color: white;
@@ -1244,10 +1244,7 @@
                 searchInput.style.display = 'none';
             }
             document.querySelector('.menu-desplegable-contenido').style.display = 'none';
-            const qrContainer = document.getElementById('qr-scanner-container');
-            if (qrContainer.style.display === 'flex') {
-                closeQrScanner();
-            }
+            closeQrScanner();
         });
 
         document.getElementById('search-icon').addEventListener('click', () => {
@@ -1258,10 +1255,7 @@
                 cartDiv.style.display = 'none';
             }
             document.querySelector('.menu-desplegable-contenido').style.display = 'none';
-            const qrContainer = document.getElementById('qr-scanner-container');
-            if (qrContainer.style.display === 'flex') {
-                closeQrScanner();
-            }
+            closeQrScanner();
         });
 
         document.getElementById('category-icon').addEventListener('click', () => {
@@ -1275,10 +1269,7 @@
             if (searchInput.style.display === 'block') {
                 searchInput.style.display = 'none';
             }
-            const qrContainer = document.getElementById('qr-scanner-container');
-            if (qrContainer.style.display === 'flex') {
-                closeQrScanner();
-            }
+            closeQrScanner();
         });
 
         document.getElementById('search').addEventListener('keyup', (e) => {
@@ -1365,56 +1356,33 @@
         const qrScanIcon = document.getElementById('qr-scan-icon');
         const qrScannerContainer = document.getElementById('qr-scanner-container');
         const closeQrScannerBtn = document.getElementById('close-qr-scanner');
-        let html5QrcodeScanner;
+        let html5QrcodeScanner = null;
 
-        function onScanSuccess(decodedText, decodedResult) {
+        function onScanSuccess(decodedText) {
             console.log(`✅ Código QR detectado: ${decodedText}`);
+            
+            // Detiene el escáner inmediatamente para evitar múltiples lecturas
+            stopQrScanner();
 
-            closeQrScanner();
-
-            const qrCodeValue = decodedText;
-            const matchingProduct = allProducts.find(p => p.QR === qrCodeValue);
+            const matchingProduct = allProducts.find(p => p.QR === decodedText);
 
             if (matchingProduct) {
                 addToCart(matchingProduct, 1);
             } else {
-                showNotification('❌ Producto no encontrado. Código: ' + qrCodeValue);
+                showNotification('❌ Producto no encontrado. Código: ' + decodedText);
             }
         }
 
         function onScanFailure(error) {
-            // Se puede agregar lógica para manejar errores de escaneo aquí
+            // Ignorar errores menores para evitar spam en la consola
         }
 
-        function closeQrScanner() {
-            if (html5QrcodeScanner && html5QrcodeScanner.getState() !== Html5Qrcode.Html5QrcodeScannerState.NOT_STARTED) {
-                html5QrcodeScanner.stop().then(() => {
-                    console.log("Escáner detenido.");
-                    qrScannerContainer.style.display = 'none';
-                }).catch(err => {
-                    console.error("Error al detener el escáner:", err);
-                    qrScannerContainer.style.display = 'none';
-                });
-            } else {
-                qrScannerContainer.style.display = 'none';
+        function startQrScanner() {
+            // Si ya existe una instancia, la limpiamos primero para evitar conflictos
+            if (html5QrcodeScanner) {
+                html5QrcodeScanner.clear().catch(console.error);
             }
-        }
 
-        qrScanIcon.addEventListener('click', () => {
-            const cartDiv = document.getElementById('cart');
-            const searchInput = document.getElementById('search');
-
-            if (cartDiv.style.display === 'block') {
-                cartDiv.style.display = 'none';
-            }
-            if (searchInput.style.display === 'block') {
-                searchInput.style.display = 'none';
-            }
-            document.querySelector('.menu-desplegable-contenido').style.display = 'none';
-            
-            qrScannerContainer.style.display = 'flex';
-            
-            // Crea una nueva instancia del escáner cada vez que se abre
             html5QrcodeScanner = new Html5QrcodeScanner(
                 "reader", {
                     fps: 10,
@@ -1427,10 +1395,35 @@
                 false
             );
 
+            // Inicia el escáner
             html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+            qrScannerContainer.style.display = 'flex';
+        }
+
+        function stopQrScanner() {
+            if (html5QrcodeScanner) {
+                html5QrcodeScanner.clear().then(() => {
+                    console.log("Escáner detenido y limpiado.");
+                    qrScannerContainer.style.display = 'none';
+                }).catch(err => {
+                    console.error("Error al detener el escáner:", err);
+                    qrScannerContainer.style.display = 'none';
+                });
+            } else {
+                qrScannerContainer.style.display = 'none';
+            }
+        }
+
+        qrScanIcon.addEventListener('click', () => {
+            // Oculta otras ventanas antes de mostrar el escáner
+            document.getElementById('cart').style.display = 'none';
+            document.getElementById('search').style.display = 'none';
+            document.querySelector('.menu-desplegable-contenido').style.display = 'none';
+
+            startQrScanner();
         });
 
-        closeQrScannerBtn.addEventListener('click', closeQrScanner);
+        closeQrScannerBtn.addEventListener('click', stopQrScanner);
     </script>
 </body>
 
