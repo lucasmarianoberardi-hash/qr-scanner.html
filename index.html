@@ -1343,19 +1343,33 @@
         const qrScannerContainer = document.getElementById('qr-scanner-container');
         const closeQrScannerBtn = document.getElementById('close-qr-scanner');
         let html5QrcodeScanner = null;
+        let isScanning = false; // Flag para evitar múltiples escaneos
 
-        function startQrScanner() {
-            // Oculta otras ventanas
+        async function startQrScanner() {
+            // Oculta otras ventanas de la interfaz
             document.getElementById('cart').style.display = 'none';
             document.getElementById('search').style.display = 'none';
             document.querySelector('.menu-desplegable-contenido').style.display = 'none';
 
-            // Si ya hay una instancia del escáner, la limpiamos para evitar conflictos
+            // Si ya hay un escáner activo, no hacemos nada
+            if (isScanning) {
+                return;
+            }
+            isScanning = true;
+
+            // Limpia cualquier instancia anterior para evitar conflictos
             if (html5QrcodeScanner) {
-                html5QrcodeScanner.clear();
-                html5QrcodeScanner = null;
+                try {
+                    await html5QrcodeScanner.stop();
+                } catch (err) {
+                    console.error("Error al detener el escáner:", err);
+                } finally {
+                    html5QrcodeScanner.clear();
+                    html5QrcodeScanner = null;
+                }
             }
 
+            // Crea e inicia una nueva instancia del escáner
             html5QrcodeScanner = new Html5QrcodeScanner(
                 "reader", {
                     fps: 10,
@@ -1368,20 +1382,20 @@
                 false
             );
 
-            // Inicia el renderizado del escáner con la nueva lógica
-            html5QrcodeScanner.render(onScanSuccess);
+            // Inicia el renderizado del escáner
+            html5QrcodeScanner.render(onScanSuccess, onScanFailure);
             qrScannerContainer.style.display = 'flex';
         }
 
-        function onScanSuccess(decodedText) {
+        async function onScanSuccess(decodedText) {
+            // Se detiene el escáner inmediatamente para evitar la doble lectura
+            await html5QrcodeScanner.stop();
+            html5QrcodeScanner.clear();
+            isScanning = false; // Restablece el flag
+            qrScannerContainer.style.display = 'none';
+
             console.log(`✅ Código QR detectado: ${decodedText}`);
 
-            // Oculta el escáner y lo detiene
-            qrScannerContainer.style.display = 'none';
-            html5QrcodeScanner.stop().catch(err => {
-                console.error("Error al detener el escáner:", err);
-            });
-            
             // Busca y añade el producto al carrito
             const matchingProduct = allProducts.find(p => p.QR === decodedText);
             if (matchingProduct) {
@@ -1390,20 +1404,27 @@
                 showNotification('❌ Producto no encontrado. Código: ' + decodedText);
             }
         }
+        
+        function onScanFailure(error) {
+            // Si el escáner ya se detuvo, no hacemos nada
+            if (!isScanning) return;
+            // Opcional: Manejar errores de escaneo si es necesario
+        }
 
         async function stopQrScanner() {
             if (html5QrcodeScanner) {
                 try {
                     await html5QrcodeScanner.stop();
-                    console.log("Escáner detenido y limpiado.");
                 } catch (err) {
                     console.error("Error al detener el escáner:", err);
                 } finally {
                     html5QrcodeScanner.clear();
                     html5QrcodeScanner = null;
+                    isScanning = false;
                     qrScannerContainer.style.display = 'none';
                 }
             } else {
+                isScanning = false;
                 qrScannerContainer.style.display = 'none';
             }
         }
