@@ -485,6 +485,7 @@
             z-index: 1500;
             justify-content: center;
             align-items: center;
+            flex-direction: column;
         }
 
         #qr-scanner-content {
@@ -503,12 +504,14 @@
             margin-top: 20px;
         }
 
+        /* NUEVO: Contenedor para la notificación en el escáner */
+        #qr-notification {
+            color: white;
+            margin-top: 10px;
+        }
+
+        /* NUEVO: Estilo para el botón de cierre */
         #close-qr-scanner {
-            position: absolute;
-            left: 20px;
-            right: auto;
-            transform: none;
-            bottom: 20px;
             background-color: #d9534f;
             color: white;
             border: none;
@@ -520,8 +523,10 @@
             max-width: 200px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
             transition: background-color 0.3s ease;
+            margin-top: 20px; /* Separación de la ventana del escáner */
+            display: block; /* Asegura que el botón se muestre */
         }
-
+        
         #close-qr-scanner:hover {
             background-color: #c9302c;
         }
@@ -840,10 +845,9 @@
 
     <div id="qr-scanner-container">
         <div id="qr-scanner-content">
-            <h2>Escanear Código QR</h2>
             <div id="reader"></div>
-            <button id="close-qr-scanner" aria-label="Cerrar escáner">CERRAR ESCANER</button>
         </div>
+        <button id="close-qr-scanner" aria-label="Cerrar escáner">CERRAR ESCANER</button>
     </div>
 
 
@@ -1338,12 +1342,12 @@
             });
         });
 
-        // --- LÓGICA DEL ESCÁNER QR (RECONFIGURADA) ---
+        // --- LÓGICA DEL ESCÁNER QR ---
         const qrScanIcon = document.getElementById('qr-scan-icon');
         const qrScannerContainer = document.getElementById('qr-scanner-container');
         const closeQrScannerBtn = document.getElementById('close-qr-scanner');
         let html5QrcodeScanner = null;
-        let isScanning = false; // Flag para evitar múltiples escaneos
+        let isScanning = false;
 
         async function startQrScanner() {
             // Oculta otras ventanas de la interfaz
@@ -1351,7 +1355,6 @@
             document.getElementById('search').style.display = 'none';
             document.querySelector('.menu-desplegable-contenido').style.display = 'none';
 
-            // Si ya hay un escáner activo, no hacemos nada
             if (isScanning) {
                 return;
             }
@@ -1368,8 +1371,8 @@
                     html5QrcodeScanner = null;
                 }
             }
-
-            // Crea e inicia una nueva instancia del escáner
+            
+            // Rediseño de la lógica: se busca solo la cámara trasera
             html5QrcodeScanner = new Html5QrcodeScanner(
                 "reader", {
                     fps: 10,
@@ -1377,37 +1380,39 @@
                         width: 250,
                         height: 250
                     },
-                    rememberLastUsedCamera: true
+                    // Nueva configuración: Usar solo la cámara trasera
+                    supportedScanFormats: [Html5QrcodeSupportedFormats.QR_CODE],
+                    videoConstraints: {
+                        facingMode: "environment"
+                    }
                 },
                 false
             );
 
-            // Inicia el renderizado del escáner
             html5QrcodeScanner.render(onScanSuccess, onScanFailure);
             qrScannerContainer.style.display = 'flex';
         }
 
         async function onScanSuccess(decodedText) {
-            // Se detiene el escáner inmediatamente para evitar la doble lectura
             await html5QrcodeScanner.stop();
             html5QrcodeScanner.clear();
-            isScanning = false; // Restablece el flag
+            isScanning = false;
             qrScannerContainer.style.display = 'none';
 
-            console.log(`✅ Código QR detectado: ${decodedText}`);
-
-            // Busca y añade el producto al carrito
             const matchingProduct = allProducts.find(p => p.QR === decodedText);
             if (matchingProduct) {
                 addToCart(matchingProduct, 1);
             } else {
                 showNotification('❌ Producto no encontrado. Código: ' + decodedText);
             }
+
+            // Reinicia el escáner automáticamente después de 3 segundos
+            setTimeout(() => {
+                startQrScanner();
+            }, 3000);
         }
         
         function onScanFailure(error) {
-            // Si el escáner ya se detuvo, no hacemos nada
-            if (!isScanning) return;
             // Opcional: Manejar errores de escaneo si es necesario
         }
 
@@ -1431,7 +1436,6 @@
 
         qrScanIcon.addEventListener('click', startQrScanner);
         closeQrScannerBtn.addEventListener('click', stopQrScanner);
-
     </script>
 </body>
 
