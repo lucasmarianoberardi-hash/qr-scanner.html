@@ -842,7 +842,7 @@
         <div id="qr-scanner-content">
             <h2>Escanear Código QR</h2>
             <div id="reader"></div>
-            <button id="close-qr-scanner" aria-label="Cerrar escáner">STOP SCANNING</button>
+            <button id="close-qr-scanner" aria-label="Cerrar escáner">CERRAR ESCANER</button>
         </div>
     </div>
 
@@ -1338,52 +1338,11 @@
             });
         });
 
-        // --- LÓGICA DEL ESCÁNER QR (REVISADO CON ASYNC/AWAIT) ---
+        // --- LÓGICA DEL ESCÁNER QR (RECONFIGURADA) ---
         const qrScanIcon = document.getElementById('qr-scan-icon');
         const qrScannerContainer = document.getElementById('qr-scanner-container');
         const closeQrScannerBtn = document.getElementById('close-qr-scanner');
         let html5QrcodeScanner = null;
-        let isScanning = false;
-
-        async function onScanSuccess(decodedText) {
-            // Verifica si ya se está procesando un escaneo
-            if (isScanning) {
-                return;
-            }
-            isScanning = true;
-
-            console.log(`✅ Código QR detectado: ${decodedText}`);
-
-            try {
-                // Detiene la cámara de forma segura y espera a que la promesa se resuelva
-                if (html5QrcodeScanner && html5QrcodeScanner.getState() === Html5Qrcode.State.SCANNING) {
-                    await html5QrcodeScanner.stop();
-                }
-
-                // Busca y añade el producto al carrito
-                const matchingProduct = allProducts.find(p => p.QR === decodedText);
-                if (matchingProduct) {
-                    addToCart(matchingProduct, 1);
-                } else {
-                    showNotification('❌ Producto no encontrado. Código: ' + decodedText);
-                }
-
-            } catch (err) {
-                console.error("Error en el proceso de escaneo/stop:", err);
-            } finally {
-                // Reinicia el escáner para la próxima lectura
-                setTimeout(() => {
-                    if (qrScannerContainer.style.display === 'flex') {
-                        startQrScanner();
-                    }
-                    isScanning = false; // Restablece el flag
-                }, 1000); // Retraso para que la notificación sea visible
-            }
-        }
-
-        function onScanFailure(error) {
-            // Ignorar errores menores para evitar spam en la consola
-        }
 
         function startQrScanner() {
             // Oculta otras ventanas
@@ -1391,7 +1350,7 @@
             document.getElementById('search').style.display = 'none';
             document.querySelector('.menu-desplegable-contenido').style.display = 'none';
 
-            // Si hay un escáner ya en ejecución, lo limpiamos y creamos uno nuevo para evitar conflictos
+            // Si ya hay una instancia del escáner, la limpiamos para evitar conflictos
             if (html5QrcodeScanner) {
                 html5QrcodeScanner.clear();
                 html5QrcodeScanner = null;
@@ -1409,8 +1368,27 @@
                 false
             );
 
-            html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+            // Inicia el renderizado del escáner con la nueva lógica
+            html5QrcodeScanner.render(onScanSuccess);
             qrScannerContainer.style.display = 'flex';
+        }
+
+        function onScanSuccess(decodedText) {
+            console.log(`✅ Código QR detectado: ${decodedText}`);
+
+            // Oculta el escáner y lo detiene
+            qrScannerContainer.style.display = 'none';
+            html5QrcodeScanner.stop().catch(err => {
+                console.error("Error al detener el escáner:", err);
+            });
+            
+            // Busca y añade el producto al carrito
+            const matchingProduct = allProducts.find(p => p.QR === decodedText);
+            if (matchingProduct) {
+                addToCart(matchingProduct, 1);
+            } else {
+                showNotification('❌ Producto no encontrado. Código: ' + decodedText);
+            }
         }
 
         async function stopQrScanner() {
@@ -1432,6 +1410,7 @@
 
         qrScanIcon.addEventListener('click', startQrScanner);
         closeQrScannerBtn.addEventListener('click', stopQrScanner);
+
     </script>
 </body>
 
